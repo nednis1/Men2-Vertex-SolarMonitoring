@@ -1,0 +1,168 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --color-surface: #0b1326;
+    --color-surface-dim: #0b1326;
+    --color-background: #0b1326;
+    --color-surface-container-lowest: #060e20;
+    --color-surface-container-low: #131b2e;
+    --color-surface-container: #171f33;
+    --color-surface-container-high: #222a3d;
+    --color-surface-container-highest: #2d3449;
+    --color-surface-variant: #2d3449;
+    --color-surface-bright: #31394d;
+
+    --color-primary: #ffc174;
+    --color-primary-container: #f59e0b;
+    --color-primary-fixed: #ffddb8;
+    --color-primary-fixed-dim: #ffb95f;
+
+    --color-secondary: #4cd7f6;
+    --color-secondary-container: #03b5d3;
+    --color-secondary-fixed: #acedff;
+    --color-secondary-fixed-dim: #4cd7f6;
+
+    --color-tertiary: #56e5a9;
+    --color-tertiary-container: #30c88f;
+    --color-tertiary-fixed: #6ffbbe;
+    --color-tertiary-fixed-dim: #4edea3;
+
+    --color-on-surface: #dae2fd;
+    --color-on-surface-variant: #d8c3ad;
+    --color-on-primary: #472a00;
+    --color-on-primary-container: #613b00;
+    --color-on-secondary: #003640;
+    --color-on-tertiary: #003824;
+
+    --color-error: #ffb4ab;
+    --color-error-container: #93000a;
+  }
+
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: #0b1326;
+    color: #dae2fd;
+    font-family: 'Inter', sans-serif;
+  }
+
+  /* Custom scrollbar for data tables and logs */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #060e20;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #222a3d;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #ffc174;
+  }
+}
+
+/* Custom Typography & Utility Classes matching prototypes */
+.font-headline-sm {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+}
+.font-headline-md {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+}
+.font-headline-lg {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+}
+.font-headline-xl {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+}
+.font-telemetry-display {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.font-telemetry-unit {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 500;
+}
+.font-label-sm {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+}
+.font-label-md {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+}
+.font-body-sm {
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+}
+.font-body-md {
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+}
+
+/* Color utility helper classes */
+.bg-surface { background-color: #0b1326; }
+.bg-surface-container-lowest { background-color: #060e20; }
+.bg-surface-container-low { background-color: #131b2e; }
+.bg-surface-container { background-color: #171f33; }
+.bg-surface-container-high { background-color: #222a3d; }
+.bg-surface-container-highest { background-color: #2d3449; }
+
+.text-on-surface { color: #dae2fd; }
+.text-on-surface-variant { color: #d8c3ad; }
+.text-primary { color: #ffc174; }
+.bg-primary { background-color: #ffc174; }
+.text-on-primary { color: #472a00; }
+.bg-primary-container { background-color: #f59e0b; }
+.text-on-primary-container { color: #613b00; }
+
+.text-secondary { color: #4cd7f6; }
+.bg-secondary { background-color: #4cd7f6; }
+.text-on-secondary { color: #003640; }
+.bg-secondary-container { background-color: #03b5d3; }
+
+.text-tertiary { color: #56e5a9; }
+.text-tertiary-fixed-dim { color: #4edea3; }
+.bg-tertiary { background-color: #56e5a9; }
+.text-on-tertiary { color: #003824; }
+
+.text-error { color: #ffb4ab; }
+.bg-error-container { background-color: #93000a; }
+
+/* Synoptic Power Flow Animation Keyframes */
+@keyframes flowDash {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+.animate-flow-pv {
+  stroke-dasharray: 6 6;
+  animation: flowDash 1.2s linear infinite;
+}
+
+.animate-flow-battery-charge {
+  stroke-dasharray: 6 6;
+  animation: flowDash 1.5s linear infinite;
+}
+
+.animate-flow-grid {
+  stroke-dasharray: 6 6;
+  animation: flowDash 1.8s linear infinite;
+}
+
+.animate-flow-load {
+  stroke-dasharray: 6 6;
+  animation: flowDash 1.4s linear infinite;
+}

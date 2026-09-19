@@ -1,0 +1,104 @@
+'use client';
+
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { AccountSummary, PlantInfo } from './types';
+
+interface AccountContextType {
+  accounts: AccountSummary[];
+  selectedAccountId: string; // 'ALL' or specific accountId
+  setSelectedAccountId: (id: string) => void;
+  selectedAccount: AccountSummary | null;
+  selectedStationId: string; // 'ALL' or specific stationId
+  setSelectedStationId: (id: string) => void;
+  selectedPlant: PlantInfo | null;
+  selectAccountAndPlant: (accountId: string, stationId?: string) => void;
+  isFleetView: boolean;
+  loading: boolean;
+  refreshAccounts: () => Promise<void>;
+  totalAccounts: number;
+  liveAccountsCount: number;
+}
+
+const AccountContext = createContext<AccountContextType | undefined>(undefined);
+
+export function AccountProvider({ children }: { children: React.ReactNode }) {
+  const [accounts, setAccounts] = useState<AccountSummary[]>([]);
+  const [selectedAccountId, setSelectedAccountId] = useState<string>('ALL');
+  const [selectedStationId, setSelectedStationId] = useState<string>('ALL');
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const refreshAccounts = useCallback(async () => {
+    try {
+      const res = await fetch('/api/deye/accounts');
+      if (res.ok) {
+        const json = await res.json();
+        setAccounts(json.accounts || []);
+      }
+    } catch (e) {
+      console.error('[AccountContext] Failed to load accounts:', e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshAccounts();
+    const interval = setInterval(refreshAccounts, 10000);
+    return () => clearInterval(interval);
+  }, [refreshAccounts]);
+
+  const selectedAccount =
+    selectedAccountId === 'ALL'
+      ? null
+      : accounts.find((acc) => acc.id === selectedAccountId) || null;
+
+  // Find plant if specific station is chosen
+  const selectedPlant =
+    selectedAccount && selectedStationId !== 'ALL'
+      ? selectedAccount.plants?.find((p) => p.stationId === selectedStationId) || null
+      : null;
+
+  const handleSetSelectedAccountId = (id: string) => {
+    setSelectedAccountId(id);
+    setSelectedStationId('ALL');
+  };
+
+  const selectAccountAndPlant = (accountId: string, stationId: string = 'ALL') => {
+    setSelectedAccountId(accountId);
+    setSelectedStationId(stationId);
+  };
+
+  const isFleetView = selectedAccountId === 'ALL';
+  const totalAccounts = accounts.length;
+  const liveAccountsCount = accounts.filter((a) => a.isLive).length;
+
+  return (
+    <AccountContext.Provider
+      value={{
+        accounts,
+        selectedAccountId,
+        setSelectedAccountId: handleSetSelectedAccountId,
+        selectedAccount,
+        selectedStationId,
+        setSelectedStationId,
+        selectedPlant,
+        selectAccountAndPlant,
+        isFleetView,
+        loading,
+        refreshAccounts,
+        totalAccounts,
+        liveAccountsCount,
+      }}
+    >
+      {children}
+    </AccountContext.Provider>
+  );
+}
+
+export function useAccount() {
+  const ctx = useContext(AccountContext);
+  if (!ctx) {
+    throw new Error('useAccount must be used within an AccountProvider');
+  }
+  return ctx;
+}

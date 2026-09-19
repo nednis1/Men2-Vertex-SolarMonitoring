@@ -1,0 +1,30 @@
+# Next.js
+.next/
+out/
+
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Production
+build/
+dist/
+
+# Environment Variables & Account Credentials
+.env*.local
+.env
+deye-accounts.json
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS Files
+.DS_Store
+*.pem
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
