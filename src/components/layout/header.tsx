@@ -16,9 +16,15 @@ import {
   Zap,
   Settings,
   Building2,
+  RefreshCw,
+  Menu,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useAccount } from '@/lib/account-context';
+import { useSidebar } from './sidebar-context';
+import { ModeToggle } from '@/components/theme/ModeToggle';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 interface HeaderProps {
   currentStationName?: string;
@@ -44,6 +50,7 @@ export function Header({
     totalAccounts,
     liveAccountsCount,
   } = useAccount();
+  const { toggleMobileOpen } = useSidebar();
 
   const [utcTime, setUtcTime] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
@@ -55,7 +62,6 @@ export function Header({
     if (expandedAccounts[accId] !== undefined) {
       return expandedAccounts[accId];
     }
-    // Default to expanded for active account or if there's only 1 account
     return selectedAccountId === accId || accounts.length === 1;
   };
 
@@ -104,196 +110,196 @@ export function Header({
     : selectedAccount?.name || currentStationName || 'Facility Array';
 
   return (
-    <header className="fixed top-0 left-72 right-0 h-16 bg-surface-container-lowest/90 backdrop-blur-xl z-40 border-b border-[#171f33] shadow-[0_1px_8px_rgba(0,0,0,0.25)]">
-      <div className="h-16 w-full px-6 flex items-center justify-between">
-        {/* Left: Account & Station Selector */}
-        <div className="flex items-center gap-4">
+    <header className="sticky top-0 z-30 h-16 w-full bg-background/85 backdrop-blur-md border-b border-border/60 transition-all">
+      <div className="h-16 w-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+        {/* Left: Mobile Menu & Dynamic Brand / Workspace Selector */}
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          {/* Mobile Drawer Trigger */}
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={toggleMobileOpen}
+            className="md:hidden rounded-xl h-8 w-8 text-muted-foreground hover:text-foreground shrink-0"
+            aria-label="Open navigation drawer"
+          >
+            <Menu size={18} />
+          </Button>
+
           {/* Account Selector Dropdown */}
-          <div className="relative" ref={dropdownRef}>
+          <div className="relative shrink-0" ref={dropdownRef}>
             <button
               onClick={() => setShowAccountDropdown(!showAccountDropdown)}
-              className="flex items-center gap-2.5 px-3.5 py-1.5 bg-surface-container hover:bg-surface-container-high rounded-lg border border-[#222a3d] cursor-pointer transition-colors text-left"
+              className="flex items-center gap-2.5 px-3 py-1.5 bg-card/80 hover:bg-accent/60 rounded-xl border border-border/60 cursor-pointer transition-colors text-left shadow-2xs"
             >
-              {isFleetView ? (
-                <Globe className="text-primary" size={18} />
-              ) : selectedPlant ? (
-                <Building2 className="text-primary" size={18} />
-              ) : (
-                <Sun className="text-primary" size={18} />
-              )}
+              <div className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                {isFleetView ? (
+                  <Globe size={14} />
+                ) : selectedPlant ? (
+                  <Building2 size={14} />
+                ) : (
+                  <Sun size={14} />
+                )}
+              </div>
               <div className="flex flex-col">
-                <span className="font-body-md text-[13px] text-on-surface font-semibold truncate max-w-[280px]">
+                <span className="font-semibold text-xs text-foreground truncate max-w-[200px] sm:max-w-[280px]">
                   {displayTitle}
                 </span>
                 {!isFleetView && selectedPlant && selectedAccount && (
-                  <span className="text-[10px] text-on-surface-variant leading-none truncate max-w-[280px]">
+                  <span className="text-[10px] text-muted-foreground leading-none truncate max-w-[200px] sm:max-w-[280px]">
                     {selectedAccount.name} · {selectedPlant.installedCapacityKw} kWp
                   </span>
                 )}
               </div>
               <ChevronDown
-                className={`text-on-surface-variant transition-transform duration-200 ${
+                className={`text-muted-foreground transition-transform duration-200 ml-1 ${
                   showAccountDropdown ? 'rotate-180' : ''
                 }`}
-                size={15}
+                size={14}
               />
             </button>
 
             {/* Dropdown Menu */}
             {showAccountDropdown && (
-              <div className="absolute left-0 mt-2 w-92 bg-surface-container-low border border-[#222a3d] rounded-xl shadow-2xl p-2.5 z-50">
-                <div className="px-2 py-1 text-[10px] font-label-sm uppercase tracking-wider text-on-surface-variant border-b border-[#222a3d]/70 mb-1.5 flex items-center justify-between">
+              <div className="absolute left-0 mt-2 w-88 bg-popover/95 border border-border/70 rounded-2xl shadow-xl p-2.5 z-50 backdrop-blur-md animate-in fade-in-80">
+                <div className="px-2 py-1 text-[10px] font-mono uppercase tracking-wider text-muted-foreground border-b border-border/60 mb-2 flex items-center justify-between">
                   <span>Monitor Accounts & Plants</span>
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-2">
                     {accounts.some((a) => (a.plants?.length || 0) > 0) && (
                       <button
                         onClick={toggleExpandAll}
-                        className="text-[10px] font-semibold text-primary hover:underline lowercase cursor-pointer"
+                        className="text-primary hover:underline cursor-pointer lowercase text-[10px]"
                       >
                         {accounts.every((a) => isAccountExpanded(a.id)) ? 'collapse all' : 'expand all'}
                       </button>
                     )}
-                    <span className="text-primary font-bold">{totalAccounts} Configured</span>
+                    <span className="font-bold text-foreground">
+                      {accounts.length} Site{accounts.length !== 1 ? 's' : ''}
+                    </span>
                   </div>
                 </div>
 
-                {/* Fleet / All Accounts Option */}
+                {/* Global Fleet View Option */}
                 <button
                   onClick={() => {
                     setSelectedAccountId('ALL');
                     setShowAccountDropdown(false);
                   }}
-                  className={`w-full flex items-center justify-between p-2.5 rounded-lg transition-colors text-left ${
+                  className={`w-full flex items-center justify-between p-2.5 rounded-xl transition-all mb-1 cursor-pointer ${
                     isFleetView
-                      ? 'bg-primary/15 text-primary border border-primary/30'
-                      : 'hover:bg-surface-container text-on-surface'
+                      ? 'bg-primary text-primary-foreground font-semibold shadow-xs'
+                      : 'hover:bg-accent text-foreground'
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <Globe size={16} className={isFleetView ? 'text-primary' : 'text-on-surface-variant'} />
-                    <div>
-                      <span className="font-body-sm text-[13px] font-semibold block leading-tight">
-                        All Accounts (Fleet Aggregate)
-                      </span>
-                      <span className="font-label-sm text-[11px] text-on-surface-variant block">
-                        Simultaneous multi-site telemetry
-                      </span>
+                    <Globe size={16} className={isFleetView ? 'text-primary-foreground' : 'text-primary'} />
+                    <div className="text-left">
+                      <div className="text-xs font-semibold">
+                        Global Fleet Aggregate View
+                      </div>
+                      <div
+                        className={`text-[10px] ${
+                          isFleetView ? 'text-primary-foreground/80' : 'text-muted-foreground'
+                        }`}
+                      >
+                        All {totalAccounts} accounts combined ({liveAccountsCount} live)
+                      </div>
                     </div>
                   </div>
-                  {isFleetView && <Check size={16} className="text-primary" />}
+                  {isFleetView && <Check size={14} />}
                 </button>
 
-                <div className="my-1.5 border-t border-[#222a3d]/50" />
+                <div className="h-px bg-border/60 my-1" />
 
-                {/* Individual Accounts & Collapsible Plants */}
-                <div className="flex flex-col gap-1.5 max-h-80 overflow-y-auto pr-0.5">
+                {/* Account & Plants List */}
+                <div className="max-h-72 overflow-y-auto space-y-1 pr-1">
                   {accounts.map((acc) => {
-                    const isAccountActive = selectedAccountId === acc.id;
-                    const plantCount = acc.plants?.length || 0;
+                    const isSelected = selectedAccountId === acc.id;
+                    const plants = acc.plants || [];
+                    const hasPlants = plants.length > 0;
                     const isExpanded = isAccountExpanded(acc.id);
 
                     return (
                       <div
                         key={acc.id}
-                        className="flex flex-col rounded-lg bg-surface-container/30 border border-[#222a3d]/50 overflow-hidden transition-all"
+                        className={`rounded-xl border transition-all ${
+                          isSelected
+                            ? 'border-primary/40 bg-primary/5'
+                            : 'border-transparent hover:border-border/60 hover:bg-muted/30'
+                        }`}
                       >
-                        {/* Account Header with Selection and Collapse/Expand Toggle */}
-                        <div className="flex items-center justify-between p-1 hover:bg-surface-container/60 transition-colors">
-                          <button
-                            onClick={() => {
-                              selectAccountAndPlant(acc.id, 'ALL');
-                              setShowAccountDropdown(false);
-                            }}
-                            className={`flex-1 flex items-center gap-2 p-1.5 rounded-md transition-colors text-left min-w-0 ${
-                              isAccountActive && selectedStationId === 'ALL'
-                                ? 'bg-primary/15 text-primary'
-                                : 'text-on-surface'
-                            }`}
-                            title={`Select all plants in ${acc.name}`}
-                          >
-                            <Zap
-                              size={15}
-                              className={isAccountActive ? 'text-primary shrink-0' : 'text-on-surface-variant shrink-0'}
+                        <div
+                          className="flex items-center justify-between p-2 cursor-pointer"
+                          onClick={() => {
+                            selectAccountAndPlant(acc.id, 'ALL');
+                            setShowAccountDropdown(false);
+                          }}
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div
+                              className={`w-2 h-2 rounded-full shrink-0 ${
+                                acc.isLive ? 'bg-emerald-500' : 'bg-amber-500'
+                              }`}
                             />
-                            <div className="truncate flex-1">
-                              <div className="flex items-center gap-1.5">
-                                <span className="font-body-sm text-[12.5px] font-semibold truncate block">
-                                  {acc.name}
-                                </span>
-                                <span
-                                  className={`px-1.5 py-0.2 rounded text-[9px] font-bold uppercase tracking-wider shrink-0 ${
-                                    acc.isLive
-                                      ? 'bg-tertiary/15 text-tertiary'
-                                      : 'bg-primary/10 text-primary'
-                                  }`}
-                                >
-                                  {acc.isLive ? 'Live' : 'Sim'}
-                                </span>
+                            <div className="text-left min-w-0">
+                              <div className="text-xs font-semibold text-foreground truncate">
+                                {acc.name}
                               </div>
-                              <span className="font-label-sm text-[10.5px] text-on-surface-variant block truncate">
-                                {plantCount} Plant{plantCount !== 1 ? 's' : ''} · {acc.inverterCount} Inv · {acc.capacityKw} kWp
-                              </span>
+                              <div className="text-[10px] text-muted-foreground font-mono truncate">
+                                {acc.id} · {acc.capacityKw} kWp
+                              </div>
                             </div>
-                            {isAccountActive && selectedStationId === 'ALL' && (
-                              <Check size={14} className="text-primary shrink-0 mr-1" />
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {hasPlants && (
+                              <button
+                                onClick={(e) => toggleAccountExpand(acc.id, e)}
+                                className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                              >
+                                <ChevronDown
+                                  size={12}
+                                  className={`transition-transform duration-200 ${
+                                    isExpanded ? 'rotate-180' : ''
+                                  }`}
+                                />
+                              </button>
                             )}
-                          </button>
-
-                          {/* Dedicated Expand/Collapse Chevron Button */}
-                          {plantCount > 0 && (
-                            <button
-                              onClick={(e) => toggleAccountExpand(acc.id, e)}
-                              className="p-1.5 rounded-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors shrink-0 flex items-center gap-1"
-                              title={isExpanded ? 'Collapse plants' : `Expand ${plantCount} plants`}
-                              aria-label={isExpanded ? 'Collapse plants' : `Expand ${plantCount} plants`}
-                            >
-                              <span className="text-[10px] text-on-surface-variant/80 font-mono">
-                                {plantCount}
-                              </span>
-                              <ChevronDown
-                                size={14}
-                                className={`transition-transform duration-200 ${
-                                  isExpanded ? 'rotate-180 text-primary' : ''
-                                }`}
-                              />
-                            </button>
-                          )}
+                            {isSelected && selectedStationId === 'ALL' && (
+                              <Check size={13} className="text-primary" />
+                            )}
+                          </div>
                         </div>
 
-                        {/* Collapsible Plant Sub-Items */}
-                        {isExpanded && plantCount > 0 && (
-                          <div className="pl-3.5 pr-1.5 pb-2 pt-1 flex flex-col gap-1 border-t border-[#222a3d]/40 bg-surface-container-low/50">
-                            <div className="text-[9.5px] font-label-sm uppercase tracking-wider text-on-surface-variant/70 pl-2 pb-0.5 flex items-center justify-between">
-                              <span>Pick Plant</span>
-                              <span className="text-[9px] text-on-surface-variant">{plantCount} Discovered</span>
-                            </div>
-                            {acc.plants.map((plant) => {
-                              const isPlantSelected = isAccountActive && selectedStationId === plant.stationId;
+                        {/* Expanded Plants Sub-list */}
+                        {hasPlants && isExpanded && (
+                          <div className="pl-6 pr-2 pb-2 pt-0.5 space-y-1">
+                            {plants.map((plant) => {
+                              const isPlantActive =
+                                isSelected && selectedStationId === plant.stationId;
                               return (
-                                <button
+                                <div
                                   key={plant.stationId}
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.stopPropagation();
                                     selectAccountAndPlant(acc.id, plant.stationId);
                                     setShowAccountDropdown(false);
                                   }}
-                                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors text-left text-xs ${
-                                    isPlantSelected
-                                      ? 'bg-primary/20 text-primary font-semibold border border-primary/40'
-                                      : 'hover:bg-surface-container text-on-surface/90 border border-transparent'
+                                  className={`flex items-center justify-between p-1.5 rounded-lg text-left cursor-pointer transition-all ${
+                                    isPlantActive
+                                      ? 'bg-primary/15 text-primary font-semibold'
+                                      : 'hover:bg-accent text-foreground/85'
                                   }`}
                                 >
-                                  <div className="flex items-center gap-2 truncate">
-                                    <Building2
-                                      size={13}
-                                      className={isPlantSelected ? 'text-primary shrink-0' : 'text-on-surface-variant shrink-0'}
-                                    />
-                                    <span className="truncate">{plant.stationName}</span>
-                                    <span className="text-[10px] text-on-surface-variant shrink-0">
+                                  <div className="flex items-center gap-1.5 truncate">
+                                    <Building2 size={12} className={isPlantActive ? 'text-primary' : 'text-muted-foreground'} />
+                                    <span className="text-[11px] truncate">{plant.stationName}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1.5 shrink-0">
+                                    <span className="text-[10px] text-muted-foreground font-mono">
                                       {plant.installedCapacityKw} kWp
                                     </span>
+                                    {isPlantActive && <Check size={11} className="text-primary" />}
                                   </div>
-                                  {isPlantSelected && <Check size={13} className="text-primary shrink-0" />}
-                                </button>
+                                </div>
                               );
                             })}
                           </div>
@@ -303,99 +309,89 @@ export function Header({
                   })}
                 </div>
 
-                {/* Footer Shortcut to Accounts Management */}
-                <div className="mt-1 pt-1.5 border-t border-[#222a3d]/70">
-                  <Link
-                    href="/accounts"
-                    onClick={() => setShowAccountDropdown(false)}
-                    className="w-full flex items-center justify-center gap-2 p-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-primary font-semibold text-[12px] transition-colors"
-                  >
-                    <Settings size={13} />
-                    Manage Accounts & Plants
-                  </Link>
-                </div>
+                <div className="h-px bg-border/60 my-2" />
+                <Link
+                  href="/accounts"
+                  onClick={() => setShowAccountDropdown(false)}
+                  className="flex items-center justify-center gap-1.5 w-full py-1.5 text-xs text-primary hover:text-primary/80 font-semibold rounded-lg hover:bg-accent transition-colors"
+                >
+                  <Settings size={13} />
+                  <span>Configure Accounts & Inverter Nodes</span>
+                </Link>
               </div>
             )}
-          </div>
-
-          {/* Multi-Account Status Badge */}
-          <div className="hidden xl:flex items-center gap-2 px-3 py-1 rounded-full bg-tertiary/10 border border-tertiary/20">
-            <span className="w-2 h-2 rounded-full bg-tertiary animate-ping" />
-            <span className="font-label-sm text-[11px] text-tertiary font-semibold">
-              {liveAccountsCount > 0
-                ? `${liveAccountsCount} / ${totalAccounts} Accounts Live (${pingMs}ms)`
-                : `Multi-Account Synced (${totalAccounts} Sites Active)`}
-            </span>
           </div>
         </div>
 
-        {/* Right: Clock, Notifications, Profile */}
-        <div className="flex items-center gap-4">
-          {/* UTC Clock */}
-          <div className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded bg-surface-container text-on-surface-variant border border-[#222a3d]/50">
-            <Clock size={15} className="text-primary/70" />
-            <span className="font-label-sm text-[12px] text-on-surface tracking-wider">
-              {utcTime || '14:28:09 UTC'}
+        {/* Right: Telemetry Health, Clock, Theme Mode Toggle, Notifications */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Cloud Bus State Indicator */}
+          <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-xl bg-card border border-border/60 text-xs font-mono">
+            <span
+              className={`w-2 h-2 rounded-full ${
+                isLiveApi || liveAccountsCount > 0
+                  ? 'bg-emerald-500 animate-pulse'
+                  : 'bg-amber-500'
+              }`}
+            />
+            <span className="text-foreground font-medium">
+              {isLiveApi || liveAccountsCount > 0 ? 'DeyeCloud Bus' : 'Simulation'}
+            </span>
+            <span className="text-muted-foreground text-[10px]">
+              {pingMs}ms
             </span>
           </div>
 
-          {/* Notifications Button */}
-          <div className="relative">
-            <button
-              onClick={() => setShowNotifications(!showNotifications)}
-              aria-label="Telemetry Notifications"
-              className="relative p-2 rounded-lg bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high border border-[#222a3d]/50 transition-colors"
-            >
-              <Bell size={18} />
-              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary font-label-sm text-[9px] font-bold text-on-primary">
-                {totalAccounts}
-              </span>
-            </button>
+          {/* UTC Clock */}
+          <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-muted/40 border border-border/50 text-[11px] font-mono text-muted-foreground">
+            <Clock size={12} />
+            <span>{utcTime || '12:00:00 UTC'}</span>
+          </div>
 
-            {/* Notification Dropdown */}
+          {/* Theme Mode Toggle (Light/Dark/System) */}
+          <ModeToggle />
+
+          {/* Notifications / Alarms Button */}
+          <div className="relative">
+            <Button
+              variant="outline"
+              size="icon-sm"
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="rounded-xl border-border/60 hover:bg-accent/60 relative"
+              title="System Alerts & Diagnostics"
+            >
+              <Bell size={15} className="text-foreground" />
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500" />
+            </Button>
+
             {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 bg-surface-container-low border border-[#222a3d] rounded-xl shadow-2xl p-3 z-50">
-                <div className="flex items-center justify-between pb-2 border-b border-[#222a3d] mb-2">
-                  <span className="font-label-sm text-[11px] uppercase tracking-wider text-on-surface-variant">
-                    Fleet Telemetry Alerts
+              <div className="absolute right-0 mt-2 w-76 bg-popover/95 border border-border/70 rounded-2xl shadow-xl p-3 z-50 backdrop-blur-md animate-in fade-in-80">
+                <div className="flex items-center justify-between pb-2 mb-2 border-b border-border/60">
+                  <span className="text-xs font-bold text-foreground">
+                    System Telemetry Status
                   </span>
-                  <span className="font-label-sm text-[10px] text-primary">{totalAccounts} Accounts</span>
+                  <Badge variant="outline" className="text-[10px] text-emerald-500 border-emerald-500/30">
+                    All Nodes OK
+                  </Badge>
                 </div>
-                <div className="flex flex-col gap-2">
-                  <div className="p-2 bg-surface-container rounded-lg border-l-2 border-primary">
-                    <span className="font-body-sm text-[12px] font-semibold text-on-surface block">
-                      Concurrent Polling Active
-                    </span>
-                    <span className="font-label-sm text-[10px] text-on-surface-variant">
-                      Monitoring {totalAccounts} DeyeCloud accounts simultaneously via JSON registry.
-                    </span>
+                <div className="space-y-2 text-xs">
+                  <div className="p-2 rounded-xl bg-muted/40 border border-border/40 flex items-start gap-2">
+                    <CheckCircle2 size={14} className="text-emerald-500 shrink-0 mt-0.5" />
+                    <div>
+                      <div className="font-semibold text-foreground">Inverter Bus Synced</div>
+                      <div className="text-[10px] text-muted-foreground">Grid frequency nominal @ 60.01 Hz</div>
+                    </div>
                   </div>
-                  <div className="p-2 bg-surface-container rounded-lg border-l-2 border-tertiary">
-                    <span className="font-body-sm text-[12px] font-semibold text-on-surface block">
-                      {selectedAccount ? `${selectedAccount.name} Connected` : accounts[0]?.name ? `${accounts[0].name} Connected` : 'Gateway Telemetry Connected'}
-                    </span>
-                    <span className="font-label-sm text-[10px] text-on-surface-variant">
-                      Gateway responding with active hybrid inverter telemetry.
-                    </span>
+                  <div className="p-2 rounded-xl bg-muted/40 border border-border/40 flex items-start gap-2">
+                    <Activity size={14} className="text-cyan-500 shrink-0 mt-0.5" />
+                    <div>
+                      <div className="font-semibold text-foreground">Trigonometric Engine Active</div>
+                      <div className="text-[10px] text-muted-foreground">Fourier harmonic analysis enabled</div>
+                    </div>
                   </div>
                 </div>
               </div>
             )}
-          </div>
-
-          {/* User Profile */}
-          <div className="flex items-center gap-3 pl-2 border-l border-[#222a3d]">
-            <div className="text-right hidden sm:block">
-              <span className="font-body-sm text-[13px] text-on-surface font-semibold block leading-tight">
-                Fleet Operations
-              </span>
-              <span className="font-label-sm text-[11px] text-on-surface-variant block">
-                Multi-Account Admin
-              </span>
-            </div>
-            <div className="w-9 h-9 rounded-full bg-surface-container-high border border-primary/50 flex items-center justify-center text-primary font-bold shadow-[0_0_8px_rgba(255,193,116,0.3)]">
-              FO
-            </div>
           </div>
         </div>
       </div>

@@ -23,6 +23,9 @@ import {
 } from 'lucide-react';
 import { AccountSummary, PlantInfo, DeviceInfo } from '@/lib/types';
 import { useAccount } from '@/lib/account-context';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 export default function AccountsManagementPage() {
   const { refreshAccounts: refreshContextAccounts } = useAccount();
@@ -257,7 +260,6 @@ export default function AccountsManagementPage() {
     }
   };
 
-  // Compute fleet totals
   const totalAccountsCount = accounts.length;
   const activeAccountsCount = accounts.filter((a) => a.status !== 'OFFLINE').length;
   let totalPlants = 0;
@@ -274,135 +276,147 @@ export default function AccountsManagementPage() {
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-[1600px] mx-auto pb-16">
-      {/* Top Banner */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-2 border-b border-[#222a3d]">
+      {/* Top Banner with VOS Design Standards */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-border/50">
         <div>
-          <h1 className="font-headline-lg text-[26px] text-on-surface font-bold flex items-center gap-2.5">
-            <Building2 className="text-primary" size={26} />
-            Fleet & Plant Operations Manager
-          </h1>
-          <p className="font-body-sm text-[13px] text-on-surface-variant mt-0.5">
-            Dynamic DeyeCloud account registry, automatic plant discovery, and multi-inverter hierarchy.
-          </p>
+          <div className="flex items-center gap-2.5">
+            <div className="p-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20">
+              <Building2 size={24} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground font-headline">
+                  Fleet & Plant Operations Manager
+                </h1>
+                <Badge variant="outline" className="border-primary/30 text-primary bg-primary/10 font-mono text-[10px]">
+                  Multi-Site Hub
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Dynamic DeyeCloud account registry, automatic plant discovery, and multi-inverter hierarchy.
+              </p>
+            </div>
+          </div>
         </div>
+
         <div className="flex items-center gap-3">
-          <button
+          <Button
             onClick={() => setShowAddAccountModal(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary hover:bg-primary-container text-on-primary font-bold text-[13px] shadow-[0_0_16px_rgba(245,158,11,0.35)] transition-all"
+            className="gap-2 h-9 text-xs font-semibold bg-primary text-primary-foreground"
           >
             <Plus size={16} />
-            Add Deye Account
-          </button>
+            <span>Add Deye Account</span>
+          </Button>
         </div>
       </div>
 
-      {/* Fleet Overview KPI Ribbon */}
+      {/* Fleet Overview KPI Ribbon in VOS Format */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 w-full">
-        <div className="bg-surface-container p-4 rounded-xl border border-[#222a3d]">
-          <span className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider block mb-1">
+        <Card className="border-border/60 bg-card/80 p-4 shadow-xs">
+          <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider block mb-1">
             Registered Accounts
           </span>
           <div className="flex items-baseline gap-1.5">
-            <span className="font-telemetry-display text-[26px] text-primary font-bold">
+            <span className="text-2xl font-bold font-mono text-primary">
               {activeAccountsCount}
             </span>
-            <span className="text-[12px] text-on-surface-variant">/ {totalAccountsCount} Active</span>
+            <span className="text-xs text-muted-foreground">/ {totalAccountsCount} Active</span>
           </div>
-        </div>
+        </Card>
 
-        <div className="bg-surface-container p-4 rounded-xl border border-[#222a3d]">
-          <span className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider block mb-1">
+        <Card className="border-border/60 bg-card/80 p-4 shadow-xs">
+          <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider block mb-1">
             Discovered Plants
           </span>
           <div className="flex items-baseline gap-1.5">
-            <span className="font-telemetry-display text-[26px] text-secondary font-bold">
+            <span className="text-2xl font-bold font-mono text-cyan-500">
               {totalPlants}
             </span>
-            <span className="text-[12px] text-on-surface-variant">Solar Arrays</span>
+            <span className="text-xs text-muted-foreground">Solar Arrays</span>
           </div>
-        </div>
+        </Card>
 
-        <div className="bg-surface-container p-4 rounded-xl border border-[#222a3d]">
-          <span className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider block mb-1">
+        <Card className="border-border/60 bg-card/80 p-4 shadow-xs">
+          <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider block mb-1">
             Hybrid Inverters
           </span>
           <div className="flex items-baseline gap-1.5">
-            <span className="font-telemetry-display text-[26px] text-tertiary font-bold">
+            <span className="text-2xl font-bold font-mono text-emerald-500">
               {totalInverters}
             </span>
-            <span className="text-[12px] text-on-surface-variant">Active Units</span>
+            <span className="text-xs text-muted-foreground">Active Units</span>
           </div>
-        </div>
+        </Card>
 
-        <div className="bg-surface-container p-4 rounded-xl border border-[#222a3d]">
-          <span className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider block mb-1">
+        <Card className="border-border/60 bg-card/80 p-4 shadow-xs">
+          <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider block mb-1">
             Data Loggers
           </span>
           <div className="flex items-baseline gap-1.5">
-            <span className="font-telemetry-display text-[26px] text-on-surface font-bold">
+            <span className="text-2xl font-bold font-mono text-foreground">
               {totalLoggers}
             </span>
-            <span className="text-[12px] text-on-surface-variant">Gateways</span>
+            <span className="text-xs text-muted-foreground">Gateways</span>
           </div>
-        </div>
+        </Card>
 
-        <div className="bg-surface-container p-4 rounded-xl border border-[#222a3d]">
-          <span className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider block mb-1">
+        <Card className="border-border/60 bg-card/80 p-4 shadow-xs">
+          <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider block mb-1">
             Total Fleet Capacity
           </span>
           <div className="flex items-baseline gap-1.5">
-            <span className="font-telemetry-display text-[26px] text-primary font-bold">
+            <span className="text-2xl font-bold font-mono text-primary">
               {totalCapacity.toFixed(0)}
             </span>
-            <span className="text-[12px] text-on-surface-variant">kWp</span>
+            <span className="text-xs text-muted-foreground">kWp</span>
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* Accounts List & Plants Tree */}
       <div className="flex flex-col gap-6">
         {accounts.map((account) => {
-          const isLive = account.isLive;
           const isSyncing = syncingId === account.id;
 
           return (
-            <div
+            <Card
               key={account.id}
-              className="bg-surface-container-low border border-[#222a3d] rounded-2xl p-6 shadow-xl relative overflow-hidden"
+              className="border-border/60 bg-card/80 p-6 shadow-xs relative overflow-hidden"
             >
               {/* Account Card Header */}
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-[#222a3d]">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-border/50">
                 <div className="flex items-start gap-3.5">
                   <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0 mt-0.5">
                     <Building2 size={24} />
                   </div>
                   <div>
                     <div className="flex items-center gap-2.5 flex-wrap">
-                      <h2 className="font-headline-md text-[19px] text-on-surface font-bold">
+                      <h2 className="text-lg font-bold text-foreground">
                         {account.name}
                       </h2>
-                      <span
-                        className={`px-2.5 py-0.5 rounded-full text-[11px] font-label-sm font-bold border ${
+                      <Badge
+                        variant={
                           account.status === 'ONLINE'
-                            ? 'bg-tertiary/10 text-tertiary border-tertiary/30'
+                            ? 'success'
                             : account.status === 'SIMULATED'
-                            ? 'bg-secondary/10 text-secondary border-secondary/30'
-                            : 'bg-on-surface/10 text-on-surface-variant border-[#222a3d]'
-                        }`}
+                            ? 'info'
+                            : 'outline'
+                        }
+                        className="text-xs font-mono"
                       >
                         {account.status === 'ONLINE'
                           ? '● Live DeyeCloud'
                           : account.status === 'SIMULATED'
-                          ? '● Realistic Simulation'
+                          ? '● Realistic Sim'
                           : '○ Disabled'}
-                      </span>
+                      </Badge>
                       {account.autoDiscovered && (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-label-sm bg-primary/10 text-primary border border-primary/20">
+                        <Badge variant="outline" className="border-primary/30 text-primary bg-primary/10 text-[10px] font-mono">
                           Auto-Discovered
-                        </span>
+                        </Badge>
                       )}
                     </div>
-                    <div className="flex items-center gap-4 mt-1 text-[12px] text-on-surface-variant flex-wrap font-mono">
+                    <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground flex-wrap font-mono">
                       <span>ID: {account.id}</span>
                       <span>·</span>
                       <span>Plants: {account.plants.length}</span>
@@ -417,121 +431,126 @@ export default function AccountsManagementPage() {
                 </div>
 
                 {/* Card Action Buttons */}
-                <div className="flex items-center gap-2.5 flex-wrap">
-                  <button
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => handleSyncAccount(account.id)}
                     disabled={isSyncing}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high border border-[#222a3d] text-on-surface text-[12px] font-semibold transition-colors disabled:opacity-50"
+                    className="gap-1.5 text-xs font-semibold"
                   >
-                    <RefreshCw size={14} className={isSyncing ? 'animate-spin text-primary' : ''} />
-                    {isSyncing ? 'Syncing...' : 'Auto-Discover Plants'}
-                  </button>
+                    <RefreshCw size={13} className={isSyncing ? 'animate-spin text-primary' : ''} />
+                    <span>{isSyncing ? 'Syncing...' : 'Auto-Discover Plants'}</span>
+                  </Button>
 
-                  <button
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => {
                       setSelectedAccountIdForPlant(account.id);
                       setShowAddPlantModal(true);
                     }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high border border-[#222a3d] text-secondary text-[12px] font-semibold transition-colors"
+                    className="gap-1.5 text-xs font-semibold text-cyan-500 border-cyan-500/30 hover:bg-cyan-500/10"
                   >
-                    <Plus size={14} />
-                    Add Plant
-                  </button>
+                    <Plus size={13} />
+                    <span>Add Plant</span>
+                  </Button>
 
-                  <button
+                  <Button
+                    variant={account.status === 'OFFLINE' ? 'outline' : 'secondary'}
+                    size="icon-sm"
                     onClick={() => handleToggleAccount(account)}
                     title={account.status === 'OFFLINE' ? 'Enable Account' : 'Disable Account'}
-                    className={`p-2 rounded-lg border transition-colors ${
-                      account.status === 'OFFLINE'
-                        ? 'bg-surface-container text-on-surface-variant border-[#222a3d] hover:text-tertiary'
-                        : 'bg-tertiary/10 text-tertiary border-tertiary/30 hover:bg-tertiary/20'
-                    }`}
                   >
-                    <Power size={15} />
-                  </button>
+                    <Power size={14} className={account.status === 'OFFLINE' ? 'text-muted-foreground' : 'text-emerald-500'} />
+                  </Button>
 
-                  <button
+                  <Button
+                    variant="outline"
+                    size="icon-sm"
                     onClick={() => handleDeleteAccount(account.id, account.name)}
                     title="Delete Account"
-                    className="p-2 rounded-lg bg-surface-container text-on-surface-variant hover:text-error hover:bg-error/10 border border-[#222a3d] transition-colors"
+                    className="text-destructive hover:bg-destructive/10 border-destructive/30"
                   >
-                    <Trash2 size={15} />
-                  </button>
+                    <Trash2 size={14} />
+                  </Button>
                 </div>
               </div>
 
               {/* Plants & Hardware Under this Account */}
               <div className="mt-5 flex flex-col gap-4">
-                <span className="font-label-sm text-[11px] uppercase tracking-wider text-on-surface-variant font-bold">
+                <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-mono font-bold">
                   Registered Plants & Attached Hardware
                 </span>
 
                 {account.plants.length === 0 ? (
-                  <div className="p-6 bg-surface-container rounded-xl border border-dashed border-[#222a3d] text-center">
-                    <p className="text-[13px] text-on-surface-variant mb-2">
+                  <div className="p-6 bg-muted/20 rounded-xl border border-dashed border-border/60 text-center">
+                    <p className="text-xs text-muted-foreground mb-2">
                       No plants discovered yet for this account.
                     </p>
-                    <button
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => handleSyncAccount(account.id)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-primary/10 text-primary text-[12px] font-bold"
+                      className="gap-1.5 text-xs font-semibold text-primary border-primary/30"
                     >
                       <RefreshCw size={13} />
-                      Run Auto-Discovery Now
-                    </button>
+                      <span>Run Auto-Discovery Now</span>
+                    </Button>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 gap-4">
                     {account.plants.map((plant) => (
                       <div
                         key={plant.stationId}
-                        className="bg-surface-container p-4 rounded-xl border border-[#222a3d]/80 flex flex-col gap-3"
+                        className="bg-card/70 p-4 rounded-xl border border-border/60 flex flex-col gap-3"
                       >
                         {/* Plant Header */}
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                           <div className="flex items-center gap-2.5">
-                            <Zap className="text-primary shrink-0" size={18} />
+                            <Zap className="text-amber-500 shrink-0" size={18} />
                             <div>
-                              <span className="font-body-md text-[14px] text-on-surface font-bold">
+                              <span className="font-bold text-sm text-foreground">
                                 {plant.stationName}
                               </span>
-                              <span className="font-mono text-[11px] text-primary ml-2">
+                              <span className="font-mono text-xs text-primary ml-2">
                                 ID: {plant.stationId}
                               </span>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="px-2 py-0.5 rounded bg-surface-container-high text-on-surface text-[11px] font-bold">
+                            <Badge variant="outline" className="text-xs font-mono">
                               {plant.installedCapacityKw} kWp Installed
-                            </span>
-                            <span className="text-[11px] text-on-surface-variant">
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
                               {plant.devices.length} Devices
                             </span>
                           </div>
                         </div>
 
-                        {/* Devices List Table */}
+                        {/* Devices List Table in VOS format */}
                         <div className="overflow-x-auto mt-1">
-                          <table className="w-full text-left text-[12px]">
+                          <table className="w-full text-left text-xs">
                             <thead>
-                              <tr className="border-b border-[#222a3d]/60 text-on-surface-variant uppercase text-[10px]">
-                                <th className="py-1.5 px-2">Type</th>
-                                <th className="py-1.5 px-2">Device Name</th>
-                                <th className="py-1.5 px-2">Serial Number</th>
-                                <th className="py-1.5 px-2">Model</th>
-                                <th className="py-1.5 px-2">Rating</th>
-                                <th className="py-1.5 px-2 text-right">Status</th>
+                              <tr className="border-b border-border/50 text-muted-foreground uppercase text-[10px] font-mono">
+                                <th className="py-2 px-2">Type</th>
+                                <th className="py-2 px-2">Device Name</th>
+                                <th className="py-2 px-2">Serial Number</th>
+                                <th className="py-2 px-2">Model</th>
+                                <th className="py-2 px-2">Rating</th>
+                                <th className="py-2 px-2 text-right">Status</th>
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-[#222a3d]/40 font-body-sm">
+                            <tbody className="divide-y divide-border/40 font-mono">
                               {plant.devices.map((device) => {
                                 const isInverter = device.deviceType === 'INVERTER';
                                 return (
-                                  <tr key={device.deviceSn} className="hover:bg-surface-container-high/50">
-                                    <td className="py-2 px-2">
+                                  <tr key={device.deviceSn} className="hover:bg-muted/30 transition-colors">
+                                    <td className="py-2.5 px-2">
                                       <span
                                         className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold ${
                                           isInverter
-                                            ? 'bg-secondary/10 text-secondary'
+                                            ? 'bg-cyan-500/10 text-cyan-500'
                                             : 'bg-primary/10 text-primary'
                                         }`}
                                       >
@@ -539,21 +558,21 @@ export default function AccountsManagementPage() {
                                         {device.deviceType}
                                       </span>
                                     </td>
-                                    <td className="py-2 px-2 font-semibold text-on-surface">
+                                    <td className="py-2.5 px-2 font-semibold text-foreground font-sans">
                                       {device.name}
                                     </td>
-                                    <td className="py-2 px-2 font-mono text-on-surface-variant">
+                                    <td className="py-2.5 px-2 text-muted-foreground">
                                       {device.deviceSn}
                                     </td>
-                                    <td className="py-2 px-2 text-on-surface-variant">
+                                    <td className="py-2.5 px-2 text-muted-foreground font-sans">
                                       {device.model || 'Deye Standard'}
                                     </td>
-                                    <td className="py-2 px-2 text-on-surface-variant font-mono">
+                                    <td className="py-2.5 px-2 text-foreground font-mono">
                                       {isInverter ? `${device.ratedKw || 120} kW` : 'Gateway'}
                                     </td>
-                                    <td className="py-2 px-2 text-right">
-                                      <span className="inline-flex items-center gap-1 text-tertiary font-bold text-[11px]">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-tertiary" />
+                                    <td className="py-2.5 px-2 text-right">
+                                      <span className="inline-flex items-center gap-1 text-emerald-500 font-bold text-[11px]">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                                         {device.status}
                                       </span>
                                     </td>
@@ -568,326 +587,291 @@ export default function AccountsManagementPage() {
                   </div>
                 )}
               </div>
-            </div>
+            </Card>
           );
         })}
       </div>
 
-      {/* MODAL: Add DeyeCloud Account */}
+      {/* MODAL: Add DeyeCloud Account in VOS Modal Format */}
       {showAddAccountModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="bg-surface-container-low border border-[#222a3d] rounded-2xl max-w-xl w-full p-6 shadow-2xl relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in-50">
+          <Card className="max-w-xl w-full p-6 shadow-2xl relative border-border/80 bg-popover/95">
             <button
               onClick={() => setShowAddAccountModal(false)}
-              className="absolute top-4 right-4 text-on-surface-variant hover:text-on-surface p-1 rounded-lg"
+              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground p-1 rounded-lg cursor-pointer"
             >
               <X size={18} />
             </button>
 
             <div className="flex items-center gap-2.5 mb-1">
               <Building2 className="text-primary" size={22} />
-              <h3 className="font-headline-md text-[18px] text-on-surface font-bold">
+              <h3 className="text-lg font-bold text-foreground font-headline">
                 Add DeyeCloud Account
               </h3>
             </div>
-            <p className="text-[12px] text-on-surface-variant mb-4">
+            <p className="text-xs text-muted-foreground mb-4">
               Enter your DeyeCloud Developer Application credentials. The system will automatically discover all plants, inverters, and loggers registered under this account.
             </p>
 
             <form onSubmit={handleAddAccountSubmit} className="flex flex-col gap-3.5">
               <div>
-                <label className="text-[11px] font-label-sm uppercase tracking-wider text-on-surface-variant block mb-1">
+                <label className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground block mb-1">
                   Account Display Name
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Account Name or user@example.com"
+                  placeholder="e.g. Acme Industrial Solar Fleet"
                   value={addForm.name}
                   onChange={(e) => setAddForm({ ...addForm, name: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-surface-container border border-[#222a3d] text-on-surface text-[13px] focus:outline-none focus:border-primary"
+                  className="w-full px-3.5 py-2 rounded-xl bg-muted/40 border border-border/60 text-foreground text-xs focus:outline-none focus:border-primary"
                 />
               </div>
 
               <div>
-                <label className="text-[11px] font-label-sm uppercase tracking-wider text-on-surface-variant block mb-1">
-                  Cloud Gateway Region
+                <label className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground block mb-1">
+                  API Regional Base URL
                 </label>
-                <select
+                <input
+                  type="text"
+                  required
                   value={addForm.baseUrl}
                   onChange={(e) => setAddForm({ ...addForm, baseUrl: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-surface-container border border-[#222a3d] text-on-surface text-[13px] focus:outline-none focus:border-primary"
-                >
-                  <option value="https://eu1-developer.deyecloud.com">
-                    Asia-Pacific / Philippines / Europe (https://eu1-developer.deyecloud.com)
-                  </option>
-                  <option value="https://api.deyecloud.com">
-                    Global Default (https://api.deyecloud.com)
-                  </option>
-                  <option value="https://us1-developer.deyecloud.com">
-                    Americas (https://us1-developer.deyecloud.com)
-                  </option>
-                  <option value="https://india-developer.deyecloud.com">
-                    India (https://india-developer.deyecloud.com)
-                  </option>
-                </select>
+                  className="w-full px-3.5 py-2 rounded-xl bg-muted/40 border border-border/60 text-foreground text-xs font-mono focus:outline-none focus:border-primary"
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-label-sm uppercase tracking-wider text-on-surface-variant block mb-1">
+                  <label className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground block mb-1">
                     App ID
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. 202609171070002"
+                    placeholder="e.g. 20240901..."
                     value={addForm.appId}
                     onChange={(e) => setAddForm({ ...addForm, appId: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-surface-container border border-[#222a3d] text-on-surface text-[13px] focus:outline-none focus:border-primary font-mono"
+                    className="w-full px-3.5 py-2 rounded-xl bg-muted/40 border border-border/60 text-foreground text-xs font-mono focus:outline-none focus:border-primary"
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-label-sm uppercase tracking-wider text-on-surface-variant block mb-1">
+                  <label className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground block mb-1">
                     App Secret
                   </label>
                   <input
                     type="password"
                     required
-                    placeholder="AppSecret token"
+                    placeholder="••••••••••••"
                     value={addForm.appSecret}
                     onChange={(e) => setAddForm({ ...addForm, appSecret: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-surface-container border border-[#222a3d] text-on-surface text-[13px] focus:outline-none focus:border-primary font-mono"
+                    className="w-full px-3.5 py-2 rounded-xl bg-muted/40 border border-border/60 text-foreground text-xs font-mono focus:outline-none focus:border-primary"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-label-sm uppercase tracking-wider text-on-surface-variant block mb-1">
-                    Deye Account Email
+                  <label className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground block mb-1">
+                    DeyeCloud Login Email
                   </label>
                   <input
                     type="email"
                     required
-                    placeholder="registered_email@deye.com"
+                    placeholder="user@domain.com"
                     value={addForm.email}
                     onChange={(e) => setAddForm({ ...addForm, email: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-surface-container border border-[#222a3d] text-on-surface text-[13px] focus:outline-none focus:border-primary"
+                    className="w-full px-3.5 py-2 rounded-xl bg-muted/40 border border-border/60 text-foreground text-xs focus:outline-none focus:border-primary"
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-label-sm uppercase tracking-wider text-on-surface-variant block mb-1">
-                    Account Password
+                  <label className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground block mb-1">
+                    Password (SHA-256 Hashed)
                   </label>
                   <input
                     type="password"
                     required
-                    placeholder="Deye password"
+                    placeholder="••••••••••••"
                     value={addForm.password}
                     onChange={(e) => setAddForm({ ...addForm, password: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-surface-container border border-[#222a3d] text-on-surface text-[13px] focus:outline-none focus:border-primary"
+                    className="w-full px-3.5 py-2 rounded-xl bg-muted/40 border border-border/60 text-foreground text-xs font-mono focus:outline-none focus:border-primary"
                   />
                 </div>
               </div>
 
               {addMessage && (
                 <div
-                  className={`p-3 rounded-lg text-[12px] ${
+                  className={`p-3 rounded-xl text-xs flex items-center gap-2 ${
                     addMessage.isError
-                      ? 'bg-error/10 text-error border border-error/20'
-                      : 'bg-tertiary/10 text-tertiary border border-tertiary/20'
+                      ? 'bg-destructive/15 text-destructive border border-destructive/20'
+                      : 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/20'
                   }`}
                 >
-                  {addMessage.text}
+                  {addMessage.isError ? <AlertCircle size={15} /> : <CheckCircle2 size={15} />}
+                  <span>{addMessage.text}</span>
                 </div>
               )}
 
-              <div className="flex items-center justify-end gap-3 mt-3 pt-3 border-t border-[#222a3d]">
-                <button
+              <div className="flex items-center justify-end gap-2.5 mt-3 pt-3 border-t border-border/60">
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => setShowAddAccountModal(false)}
-                  className="px-4 py-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface text-[13px] font-semibold"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
                   disabled={adding}
-                  className="flex items-center gap-2 px-5 py-2 rounded-xl bg-primary hover:bg-primary-container text-on-primary text-[13px] font-bold shadow-[0_0_14px_rgba(245,158,11,0.3)] disabled:opacity-50"
+                  size="sm"
+                  className="gap-2 bg-primary text-primary-foreground"
                 >
-                  <RefreshCw size={14} className={adding ? 'animate-spin' : ''} />
-                  {adding ? 'Connecting & Auto-Discovering...' : 'Save & Auto-Discover'}
-                </button>
+                  <RefreshCw className={`h-3.5 w-3.5 ${adding ? 'animate-spin' : ''}`} />
+                  <span>{adding ? 'Authenticating...' : 'Register & Auto-Discover'}</span>
+                </Button>
               </div>
             </form>
-          </div>
+          </Card>
         </div>
       )}
 
-      {/* MODAL: Add Plant Manually */}
+      {/* MODAL: Add Solar Plant in VOS Modal Format */}
       {showAddPlantModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="bg-surface-container-low border border-[#222a3d] rounded-2xl max-w-xl w-full p-6 shadow-2xl relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in-50">
+          <Card className="max-w-xl w-full p-6 shadow-2xl relative border-border/80 bg-popover/95 max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setShowAddPlantModal(false)}
-              className="absolute top-4 right-4 text-on-surface-variant hover:text-on-surface p-1 rounded-lg"
+              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground p-1 rounded-lg cursor-pointer"
             >
               <X size={18} />
             </button>
 
             <div className="flex items-center gap-2.5 mb-1">
-              <Plus className="text-secondary" size={22} />
-              <h3 className="font-headline-md text-[18px] text-on-surface font-bold">
-                Add Solar Plant & Hardware
+              <Zap className="text-primary" size={22} />
+              <h3 className="text-lg font-bold text-foreground font-headline">
+                Add Solar Plant Station
               </h3>
             </div>
-            <p className="text-[12px] text-on-surface-variant mb-4">
-              Manually register a solar array with multiple hybrid inverters and data loggers.
+            <p className="text-xs text-muted-foreground mb-4">
+              Manually register a solar station, inverter units, and telemetry data logger.
             </p>
 
             <form onSubmit={handleAddPlantSubmit} className="flex flex-col gap-3.5">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-label-sm uppercase tracking-wider text-on-surface-variant block mb-1">
-                    Station / Plant Name
+                  <label className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground block mb-1">
+                    Station Name
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Warehouse Rooftop Array"
+                    placeholder="e.g. North Warehouse Array"
                     value={plantForm.stationName}
                     onChange={(e) => setPlantForm({ ...plantForm, stationName: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-surface-container border border-[#222a3d] text-on-surface text-[13px] focus:outline-none focus:border-secondary"
+                    className="w-full px-3.5 py-2 rounded-xl bg-muted/40 border border-border/60 text-foreground text-xs focus:outline-none focus:border-primary"
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-label-sm uppercase tracking-wider text-on-surface-variant block mb-1">
-                    Station ID
+                  <label className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground block mb-1">
+                    Station ID (Cloud/Local)
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. SP_W1"
+                    placeholder="e.g. PLANT-003"
                     value={plantForm.stationId}
                     onChange={(e) => setPlantForm({ ...plantForm, stationId: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-surface-container border border-[#222a3d] text-on-surface text-[13px] focus:outline-none focus:border-secondary font-mono"
+                    className="w-full px-3.5 py-2 rounded-xl bg-muted/40 border border-border/60 text-foreground text-xs font-mono focus:outline-none focus:border-primary"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-label-sm uppercase tracking-wider text-on-surface-variant block mb-1">
-                    Total Capacity (kWp)
+                  <label className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground block mb-1">
+                    Installed Capacity (kWp)
                   </label>
                   <input
                     type="number"
                     required
-                    placeholder="120"
                     value={plantForm.installedCapacityKw}
-                    onChange={(e) =>
-                      setPlantForm({ ...plantForm, installedCapacityKw: Number(e.target.value) })
-                    }
-                    className="w-full px-3 py-2 rounded-lg bg-surface-container border border-[#222a3d] text-on-surface text-[13px] focus:outline-none focus:border-secondary"
+                    onChange={(e) => setPlantForm({ ...plantForm, installedCapacityKw: Number(e.target.value) })}
+                    className="w-full px-3.5 py-2 rounded-xl bg-muted/40 border border-border/60 text-foreground text-xs font-mono focus:outline-none focus:border-primary"
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-label-sm uppercase tracking-wider text-on-surface-variant block mb-1">
-                    Site Location
+                  <label className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground block mb-1">
+                    Facility Location / Address
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. Building C Rooftop"
+                    placeholder="e.g. Building B, Main Industrial Park"
                     value={plantForm.address}
                     onChange={(e) => setPlantForm({ ...plantForm, address: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-surface-container border border-[#222a3d] text-on-surface text-[13px] focus:outline-none focus:border-secondary"
+                    className="w-full px-3.5 py-2 rounded-xl bg-muted/40 border border-border/60 text-foreground text-xs focus:outline-none focus:border-primary"
                   />
                 </div>
               </div>
 
-              {/* Inverter 1 */}
-              <div className="p-3 bg-surface-container rounded-xl border border-[#222a3d]">
-                <span className="text-[11px] font-bold text-secondary uppercase block mb-2">
-                  Inverter #1
+              {/* Inverter #1 */}
+              <div className="p-3.5 rounded-xl bg-muted/30 border border-border/50">
+                <span className="text-xs font-bold text-foreground block mb-2 font-mono">
+                  Inverter Unit #1
                 </span>
                 <div className="grid grid-cols-2 gap-2">
                   <input
                     type="text"
+                    required
                     placeholder="Serial Number (e.g. 2408124366)"
                     value={plantForm.inverterSn1}
                     onChange={(e) => setPlantForm({ ...plantForm, inverterSn1: e.target.value })}
-                    className="px-2.5 py-1.5 rounded-lg bg-surface-container-high border border-[#222a3d] text-[12px] font-mono"
+                    className="w-full px-3 py-1.5 rounded-lg bg-card border border-border/60 text-foreground text-xs font-mono"
                   />
-                  <input
-                    type="number"
-                    placeholder="Rated kW (e.g. 120)"
-                    value={plantForm.inverterKw1}
-                    onChange={(e) =>
-                      setPlantForm({ ...plantForm, inverterKw1: Number(e.target.value) })
-                    }
-                    className="px-2.5 py-1.5 rounded-lg bg-surface-container-high border border-[#222a3d] text-[12px]"
-                  />
-                </div>
-              </div>
-
-              {/* Inverter 2 */}
-              <div className="p-3 bg-surface-container rounded-xl border border-[#222a3d]">
-                <span className="text-[11px] font-bold text-secondary uppercase block mb-2">
-                  Inverter #2 (Optional)
-                </span>
-                <div className="grid grid-cols-2 gap-2">
                   <input
                     type="text"
-                    placeholder="Serial Number (e.g. 2408270126)"
-                    value={plantForm.inverterSn2}
-                    onChange={(e) => setPlantForm({ ...plantForm, inverterSn2: e.target.value })}
-                    className="px-2.5 py-1.5 rounded-lg bg-surface-container-high border border-[#222a3d] text-[12px] font-mono"
-                  />
-                  <input
-                    type="number"
-                    placeholder="Rated kW (e.g. 120)"
-                    value={plantForm.inverterKw2}
-                    onChange={(e) =>
-                      setPlantForm({ ...plantForm, inverterKw2: Number(e.target.value) })
-                    }
-                    className="px-2.5 py-1.5 rounded-lg bg-surface-container-high border border-[#222a3d] text-[12px]"
+                    placeholder="Model (e.g. SUN-120K-SG01HP3-EU-AM2)"
+                    value={plantForm.inverterModel1}
+                    onChange={(e) => setPlantForm({ ...plantForm, inverterModel1: e.target.value })}
+                    className="w-full px-3 py-1.5 rounded-lg bg-card border border-border/60 text-foreground text-xs font-mono"
                   />
                 </div>
               </div>
 
-              {/* Logger */}
-              <div>
-                <label className="text-[11px] font-label-sm uppercase tracking-wider text-on-surface-variant block mb-1">
-                  Data Logger Serial Number (Optional)
-                </label>
+              {/* Data Logger */}
+              <div className="p-3.5 rounded-xl bg-muted/30 border border-border/50">
+                <span className="text-xs font-bold text-foreground block mb-2 font-mono">
+                  Data Logger (Optional)
+                </span>
                 <input
                   type="text"
-                  placeholder="e.g. 2408L009142"
+                  placeholder="Logger SN (e.g. 2309811002)"
                   value={plantForm.loggerSn}
                   onChange={(e) => setPlantForm({ ...plantForm, loggerSn: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-surface-container border border-[#222a3d] text-on-surface text-[13px] focus:outline-none focus:border-secondary font-mono"
+                  className="w-full px-3 py-1.5 rounded-lg bg-card border border-border/60 text-foreground text-xs font-mono"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 mt-3 pt-3 border-t border-[#222a3d]">
-                <button
+              <div className="flex items-center justify-end gap-2.5 mt-3 pt-3 border-t border-border/60">
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => setShowAddPlantModal(false)}
-                  className="px-4 py-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface text-[13px] font-semibold"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
                   disabled={savingPlant}
-                  className="flex items-center gap-2 px-5 py-2 rounded-xl bg-secondary hover:bg-secondary/90 text-on-secondary text-[13px] font-bold shadow-[0_0_14px_rgba(76,215,246,0.3)] disabled:opacity-50"
+                  size="sm"
+                  className="bg-primary text-primary-foreground"
                 >
-                  {savingPlant ? 'Saving Plant...' : 'Save Plant'}
-                </button>
+                  {savingPlant ? 'Saving Plant...' : 'Register Plant'}
+                </Button>
               </div>
             </form>
-          </div>
+          </Card>
         </div>
       )}
     </div>

@@ -10,12 +10,34 @@ import {
   Zap,
   ArrowUpRight,
   Sparkles,
+  Waves,
+  RefreshCw,
+  Clock,
+  Download,
 } from 'lucide-react';
+import {
+  AreaChart,
+  Area,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from 'recharts';
 import { HourlyEnergyPoint } from '@/lib/types';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { TrigonometricHistoryGraph } from '@/components/analytics/TrigonometricHistoryGraph';
 
 export default function YieldArbitragePage() {
   const [timeRange, setTimeRange] = useState<'DAY' | 'WEEK' | 'MONTH' | 'YEAR'>('DAY');
   const [hourlyData, setHourlyData] = useState<HourlyEnergyPoint[]>([]);
+  const [viewMode, setViewMode] = useState<'arbitrage' | 'trigonometric'>('arbitrage');
 
   useEffect(() => {
     fetch('/api/deye/history')
@@ -34,254 +56,326 @@ export default function YieldArbitragePage() {
     { date: 'Sep 11, 2026', yieldKwh: 495.6, selfConsPct: 81.2, gridExportKwh: 93.1, peakSavedUsd: 189.10, roiScore: '+25.0%' },
   ];
 
+  const chartData = (hourlyData.length > 0 ? hourlyData : [
+    { hour: '00:00', solarYieldKw: 0, loadDemandKw: 42, batteryFlowKw: -20, tariffRateUsd: 0.14 },
+    { hour: '02:00', solarYieldKw: 0, loadDemandKw: 39, batteryFlowKw: -18, tariffRateUsd: 0.14 },
+    { hour: '04:00', solarYieldKw: 0, loadDemandKw: 45, batteryFlowKw: -20, tariffRateUsd: 0.14 },
+    { hour: '06:00', solarYieldKw: 24.5, loadDemandKw: 56, batteryFlowKw: -12, tariffRateUsd: 0.14 },
+    { hour: '08:00', solarYieldKw: 78.2, loadDemandKw: 68, batteryFlowKw: 12.0, tariffRateUsd: 0.14 },
+    { hour: '10:00', solarYieldKw: 108.6, loadDemandKw: 74, batteryFlowKw: 28.5, tariffRateUsd: 0.14 },
+    { hour: '12:00', solarYieldKw: 119.5, loadDemandKw: 66, batteryFlowKw: 32.0, tariffRateUsd: 0.14 },
+    { hour: '14:00', solarYieldKw: 104.5, loadDemandKw: 72, batteryFlowKw: 22.0, tariffRateUsd: 0.36 },
+    { hour: '16:00', solarYieldKw: 64.2, loadDemandKw: 73, batteryFlowKw: 5.0, tariffRateUsd: 0.36 },
+    { hour: '18:00', solarYieldKw: 9.8, loadDemandKw: 68, batteryFlowKw: -28.0, tariffRateUsd: 0.36 },
+    { hour: '20:00', solarYieldKw: 0, loadDemandKw: 62, batteryFlowKw: -28.0, tariffRateUsd: 0.36 },
+    { hour: '22:00', solarYieldKw: 0, loadDemandKw: 50, batteryFlowKw: -22.0, tariffRateUsd: 0.14 },
+  ]).map((pt) => ({
+    ...pt,
+    hourDecimal: parseInt(pt.hour.split(':')[0], 10),
+    gridExportKw: Math.max(0, pt.solarYieldKw - pt.loadDemandKw - Math.max(0, pt.batteryFlowKw)),
+  }));
+
   return (
     <div className="flex flex-col gap-6 w-full max-w-[1600px] mx-auto pb-12">
-      {/* Top Header */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-2 border-b border-[#222a3d]">
+      {/* Top Header with VOS Design Standards */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-border/50">
         <div>
-          <h1 className="font-headline-lg text-[26px] text-on-surface font-bold flex items-center gap-2.5">
-            <TrendingUp className="text-primary" size={26} />
-            Yield Analytics & Time-of-Use Arbitrage
-          </h1>
-          <p className="font-body-sm text-[13px] text-on-surface-variant mt-0.5">
-            Tariff delta optimization, smart battery peak-shaving, and historical revenue generation.
-          </p>
+          <div className="flex items-center gap-2.5">
+            <div className="p-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20">
+              <TrendingUp size={24} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground font-headline">
+                  Yield Analytics & Time-of-Use Arbitrage
+                </h1>
+                <Badge variant="outline" className="border-emerald-500/30 text-emerald-500 bg-emerald-500/10 font-mono text-[10px]">
+                  Directus Ledger
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Tariff delta optimization, smart battery peak-shaving, and historical revenue generation.
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* Time Range Selector */}
-        <div className="flex items-center gap-1 p-1 bg-surface-container rounded-xl border border-[#222a3d]">
-          {(['DAY', 'WEEK', 'MONTH', 'YEAR'] as const).map((range) => (
+        {/* Time Range & View Mode Selectors */}
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-xl border border-border/50">
+            {(['DAY', 'WEEK', 'MONTH', 'YEAR'] as const).map((range) => (
+              <button
+                key={range}
+                onClick={() => setTimeRange(range)}
+                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  timeRange === range
+                    ? 'bg-primary text-primary-foreground shadow-xs'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {range}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-xl border border-border/50">
             <button
-              key={range}
-              onClick={() => setTimeRange(range)}
-              className={`px-3.5 py-1.5 rounded-lg text-[12px] font-label-sm font-semibold transition-all ${
-                timeRange === range
-                  ? 'bg-primary text-on-primary shadow-[0_0_12px_rgba(255,193,116,0.4)]'
-                  : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
+              onClick={() => setViewMode('arbitrage')}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                viewMode === 'arbitrage'
+                  ? 'bg-background text-foreground shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              {range}
+              Arbitrage Curve
             </button>
-          ))}
+            <button
+              onClick={() => setViewMode('trigonometric')}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                viewMode === 'trigonometric'
+                  ? 'bg-background text-foreground shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Trigonometric Fit
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* 4 Primary Financial & Yield KPI Cards */}
+      {/* 4 Primary Financial & Yield KPI Cards in VOS format */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Peak Shaved Savings */}
-        <div className="bg-surface-container p-5 rounded-2xl border border-tertiary/40 shadow-lg relative overflow-hidden">
-          <div className="flex items-center justify-between mb-2">
-            <span className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider">
+        <Card className="border-border/60 bg-card/80 shadow-xs hover:border-emerald-500/40 transition-all">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 p-4">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-mono">
               Today Arbitrage Savings
-            </span>
-            <span className="p-2 rounded-xl bg-tertiary/10 text-tertiary">
+            </CardTitle>
+            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
               <DollarSign size={18} />
+            </div>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-black font-mono text-emerald-500">
+                $184.20
+              </span>
+              <span className="text-xs font-mono font-bold text-emerald-500">+18.4%</span>
+            </div>
+            <span className="text-xs text-muted-foreground mt-1.5 block">
+              Grid peak tariff ($0.36/kWh) avoided via battery
             </span>
-          </div>
-          <div className="flex items-baseline gap-1.5">
-            <span className="font-telemetry-display text-[32px] text-tertiary font-bold">
-              $184.20
-            </span>
-            <span className="font-label-sm text-[12px] text-tertiary font-bold">+18.4%</span>
-          </div>
-          <span className="font-label-sm text-[11px] text-on-surface-variant mt-2 block">
-            Grid peak tariff ($0.36/kWh) avoided via battery
-          </span>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Monthly Projection */}
-        <div className="bg-surface-container p-5 rounded-2xl border border-primary/40 shadow-lg relative overflow-hidden">
-          <div className="flex items-center justify-between mb-2">
-            <span className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider">
+        <Card className="border-border/60 bg-card/80 shadow-xs hover:border-primary/40 transition-all">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 p-4">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-mono">
               Projected Monthly Savings
-            </span>
-            <span className="p-2 rounded-xl bg-primary/10 text-primary">
+            </CardTitle>
+            <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20">
               <Sparkles size={18} />
+            </div>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-black font-mono text-primary">
+                $5,480.00
+              </span>
+              <span className="text-xs font-mono font-bold text-primary">Est</span>
+            </div>
+            <span className="text-xs text-muted-foreground mt-1.5 block">
+              Annualized ROI: 3.2 Years Payback
             </span>
-          </div>
-          <div className="flex items-baseline gap-1.5">
-            <span className="font-telemetry-display text-[32px] text-primary font-bold">
-              $5,480.00
-            </span>
-            <span className="font-label-sm text-[12px] text-primary font-bold">Est</span>
-          </div>
-          <span className="font-label-sm text-[11px] text-on-surface-variant mt-2 block">
-            Annualized ROI: 3.2 Years Payback
-          </span>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Battery Roundtrip Efficiency */}
-        <div className="bg-surface-container p-5 rounded-2xl border border-secondary/40 shadow-lg relative overflow-hidden">
-          <div className="flex items-center justify-between mb-2">
-            <span className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider">
+        <Card className="border-border/60 bg-card/80 shadow-xs hover:border-cyan-500/40 transition-all">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 p-4">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-mono">
               Roundtrip ESS Health
-            </span>
-            <span className="p-2 rounded-xl bg-secondary/10 text-secondary">
+            </CardTitle>
+            <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-500 border border-cyan-500/20">
               <Battery size={18} />
+            </div>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-black font-mono text-cyan-500">
+                94.8%
+              </span>
+              <span className="text-xs font-mono font-bold text-cyan-500">Nominal</span>
+            </div>
+            <span className="text-xs text-muted-foreground mt-1.5 block">
+              1,240 Cycles | DOD clamped at 85%
             </span>
-          </div>
-          <div className="flex items-baseline gap-1.5">
-            <span className="font-telemetry-display text-[32px] text-secondary font-bold">
-              94.8%
-            </span>
-            <span className="font-label-sm text-[12px] text-secondary font-bold">Nominal</span>
-          </div>
-          <span className="font-label-sm text-[11px] text-on-surface-variant mt-2 block">
-            1,240 Cycles | DOD clamped at 85%
-          </span>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Carbon Offset */}
-        <div className="bg-surface-container p-5 rounded-2xl border border-tertiary/40 shadow-lg relative overflow-hidden">
-          <div className="flex items-center justify-between mb-2">
-            <span className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider">
+        <Card className="border-border/60 bg-card/80 shadow-xs hover:border-emerald-500/40 transition-all">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 p-4">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-mono">
               Carbon Offset Index
-            </span>
-            <span className="p-2 rounded-xl bg-tertiary/10 text-tertiary">
+            </CardTitle>
+            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
               <Leaf size={18} />
+            </div>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-black font-mono text-emerald-500">
+                14.8
+              </span>
+              <span className="text-xs text-muted-foreground font-normal">Tons CO₂e</span>
+            </div>
+            <span className="text-xs text-muted-foreground mt-1.5 block">
+              Equivalent to 380 trees planted
             </span>
-          </div>
-          <div className="flex items-baseline gap-1.5">
-            <span className="font-telemetry-display text-[32px] text-tertiary font-bold">
-              14.8
-            </span>
-            <span className="font-telemetry-unit text-[14px] text-on-surface-variant">Tons CO₂e</span>
-          </div>
-          <span className="font-label-sm text-[11px] text-on-surface-variant mt-2 block">
-            Equivalent to 380 trees planted
-          </span>
-        </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Comparative Area Visualizer: Generation vs Facility Demand */}
-      <div className="bg-surface-container-low rounded-2xl border border-[#222a3d] p-6 shadow-xl">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-[#222a3d]">
-          <div>
-            <h2 className="font-headline-sm text-[17px] text-on-surface font-bold flex items-center gap-2">
-              <Zap size={18} className="text-primary" />
-              Diurnal Curve: Solar Generation vs Industrial Load Profile
-            </h2>
-            <span className="font-body-sm text-[12px] text-on-surface-variant">
-              Orange = Solar PV Production (kW) | Blue = Facility Consumption (kW) | Green = Battery Arbitrage
-            </span>
-          </div>
-          <div className="flex items-center gap-4 text-[12px] font-label-sm">
-            <span className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-full bg-primary" /> Solar Harvest
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-full bg-secondary" /> Facility Demand
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-full bg-tertiary" /> Battery Arbitrage
-            </span>
-          </div>
-        </div>
-
-        {/* 24-Hour Bar / Timeline Visualizer */}
-        <div className="grid grid-cols-6 md:grid-cols-12 gap-2 py-4">
-          {(hourlyData.length > 0 ? hourlyData : [
-            { hour: '00:00', solarYieldKw: 0, loadDemandKw: 45, batteryFlowKw: -20, tariffRateUsd: 0.14 },
-            { hour: '02:00', solarYieldKw: 0, loadDemandKw: 42, batteryFlowKw: -18, tariffRateUsd: 0.14 },
-            { hour: '04:00', solarYieldKw: 0, loadDemandKw: 48, batteryFlowKw: -22, tariffRateUsd: 0.14 },
-            { hour: '06:00', solarYieldKw: 24.5, loadDemandKw: 55, batteryFlowKw: -15, tariffRateUsd: 0.14 },
-            { hour: '08:00', solarYieldKw: 78.2, loadDemandKw: 68, batteryFlowKw: 10.2, tariffRateUsd: 0.14 },
-            { hour: '10:00', solarYieldKw: 104.8, loadDemandKw: 72, batteryFlowKw: 22.5, tariffRateUsd: 0.14 },
-            { hour: '12:00', solarYieldKw: 115.0, loadDemandKw: 65, batteryFlowKw: 28.0, tariffRateUsd: 0.14 },
-            { hour: '14:00', solarYieldKw: 108.4, loadDemandKw: 58, batteryFlowKw: 24.0, tariffRateUsd: 0.36 },
-            { hour: '16:00', solarYieldKw: 82.5, loadDemandKw: 62, batteryFlowKw: 12.0, tariffRateUsd: 0.36 },
-            { hour: '18:00', solarYieldKw: 31.4, loadDemandKw: 70, batteryFlowKw: -30.0, tariffRateUsd: 0.36 },
-            { hour: '20:00', solarYieldKw: 0, loadDemandKw: 64, batteryFlowKw: -25.0, tariffRateUsd: 0.36 },
-            { hour: '22:00', solarYieldKw: 0, loadDemandKw: 50, batteryFlowKw: -20.0, tariffRateUsd: 0.14 },
-          ]).map((pt, i) => {
-            const solarHeight = Math.min(100, (pt.solarYieldKw / 120) * 100);
-            const loadHeight = Math.min(100, (pt.loadDemandKw / 120) * 100);
-            const isPeak = pt.tariffRateUsd > 0.25;
-
-            return (
-              <div key={i} className="flex flex-col items-center gap-2">
-                <div className="h-44 w-full bg-surface-container rounded-xl p-1 flex items-end justify-center gap-1 relative overflow-hidden border border-[#222a3d]">
-                  {isPeak && (
-                    <div className="absolute top-1 left-0 right-0 text-center">
-                      <span className="font-label-sm text-[8px] text-tertiary uppercase font-bold bg-tertiary/15 px-1 py-0.2 rounded">
-                        PEAK
-                      </span>
-                    </div>
-                  )}
-                  {/* Solar Column */}
-                  <div
-                    className="w-2.5 bg-primary rounded-t transition-all duration-500 shadow-[0_0_8px_rgba(255,193,116,0.3)]"
-                    style={{ height: `${solarHeight}%` }}
-                    title={`Solar: ${pt.solarYieldKw} kW`}
+      {/* Dynamic View: Diurnal Area Chart OR Trigonometric Analysis */}
+      {viewMode === 'arbitrage' ? (
+        <Card className="border-border/60 bg-card/80 shadow-sm">
+          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-3 border-b border-border/50 p-5">
+            <div>
+              <CardTitle className="text-base font-bold flex items-center gap-2">
+                <Zap size={18} className="text-amber-500" />
+                <span>Diurnal Curve: Solar Generation vs Industrial Load Profile</span>
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Amber = Solar PV Production | Indigo = Facility Load Demand | Cyan = Battery ESS Flow
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-3 text-xs font-mono text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> PV Harvest
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" /> Facility Load
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-cyan-500" /> Battery ESS
+              </span>
+            </div>
+          </CardHeader>
+          <CardContent className="p-5 pt-4">
+            <div className="h-[320px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="solarGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.0} />
+                    </linearGradient>
+                    <linearGradient id="loadGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="opacity-15" />
+                  <XAxis dataKey="hour" stroke="currentColor" className="text-[10px] opacity-60" />
+                  <YAxis stroke="currentColor" className="text-[10px] opacity-60" unit="kW" />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'rgba(23, 31, 51, 0.95)',
+                      borderRadius: '0.75rem',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      fontSize: '12px',
+                    }}
                   />
-                  {/* Load Column */}
-                  <div
-                    className="w-2.5 bg-secondary/80 rounded-t transition-all duration-500"
-                    style={{ height: `${loadHeight}%` }}
-                    title={`Load: ${pt.loadDemandKw} kW`}
+                  <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
+                  <Area
+                    type="monotone"
+                    dataKey="solarYieldKw"
+                    name="Solar PV Harvest (kW)"
+                    stroke="#f59e0b"
+                    strokeWidth={2}
+                    fill="url(#solarGrad)"
                   />
-                </div>
-                <span className="font-label-sm text-[10px] text-on-surface-variant">
-                  {pt.hour}
-                </span>
-                <span className="font-mono text-[9px] text-on-surface-variant font-bold">
-                  {pt.solarYieldKw > 0 ? `${pt.solarYieldKw}k` : '-'}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+                  <Area
+                    type="monotone"
+                    dataKey="loadDemandKw"
+                    name="Industrial Load Demand (kW)"
+                    stroke="#6366f1"
+                    strokeWidth={2}
+                    fill="url(#loadGrad)"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="batteryFlowKw"
+                    name="Battery ESS Arbitrage (kW)"
+                    stroke="#06b6d4"
+                    strokeWidth={2}
+                    strokeDasharray="3 3"
+                    dot={false}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <TrigonometricHistoryGraph data={chartData} installedCapacityKw={120} />
+      )}
 
-      {/* Historical Yield & Arbitrage Table */}
-      <div className="bg-surface-container rounded-2xl border border-[#222a3d] p-6 shadow-md">
-        <div className="flex items-center justify-between mb-4 pb-2 border-b border-[#222a3d]">
-          <span className="font-headline-sm text-[16px] text-on-surface font-semibold">
+      {/* Historical Yield & Arbitrage Table in VOS Data-Grid format */}
+      <Card className="border-border/60 bg-card/80 shadow-xs">
+        <CardHeader className="flex flex-row items-center justify-between pb-3 p-5 border-b border-border/50">
+          <CardTitle className="text-base font-bold text-foreground">
             Historical Generation & Arbitrage Log
-          </span>
-          <span className="font-label-sm text-[11px] text-on-surface-variant">
+          </CardTitle>
+          <span className="text-xs font-mono text-muted-foreground">
             Exported to Directus ERP Ledger
           </span>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-[13px]">
-            <thead>
-              <tr className="border-b border-[#222a3d] text-on-surface-variant font-label-sm text-[11px] uppercase">
-                <th className="py-2.5 px-3">Date</th>
-                <th className="py-2.5 px-3">Solar Yield</th>
-                <th className="py-2.5 px-3">Self-Consumption</th>
-                <th className="py-2.5 px-3">Grid Feed-In</th>
-                <th className="py-2.5 px-3">Peak Shaved</th>
-                <th className="py-2.5 px-3 text-right">Net ROI Performance</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#222a3d]/50 font-body-sm">
-              {historyRows.map((row, idx) => (
-                <tr key={idx} className="hover:bg-surface-container-high transition-colors">
-                  <td className="py-3 px-3 font-semibold text-on-surface">{row.date}</td>
-                  <td className="py-3 px-3 font-telemetry-display text-primary font-bold">
-                    {row.yieldKwh.toFixed(1)} kWh
-                  </td>
-                  <td className="py-3 px-3 font-telemetry-display text-on-surface">
-                    {row.selfConsPct.toFixed(1)}%
-                  </td>
-                  <td className="py-3 px-3 font-telemetry-display text-tertiary">
-                    +{row.gridExportKwh.toFixed(1)} kWh
-                  </td>
-                  <td className="py-3 px-3 font-telemetry-display text-tertiary font-bold">
-                    ${row.peakSavedUsd.toFixed(2)}
-                  </td>
-                  <td className="py-3 px-3 text-right">
-                    <span className="px-2 py-0.5 rounded bg-tertiary/15 text-tertiary font-label-sm text-[11px] font-bold">
-                      {row.roiScore}
-                    </span>
-                  </td>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="data-grid border-0 rounded-none shadow-none">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Total PV Harvest</th>
+                  <th>Self-Consumption</th>
+                  <th>Grid Export</th>
+                  <th>Peak Tariff Saved</th>
+                  <th className="text-right">Arbitrage ROI Score</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+              </thead>
+              <tbody>
+                {historyRows.map((row, i) => (
+                  <tr key={i}>
+                    <td className="font-semibold text-foreground">
+                      {row.date}
+                    </td>
+                    <td className="td-num text-amber-500 font-bold text-left">
+                      {row.yieldKwh.toFixed(1)} kWh
+                    </td>
+                    <td className="td-num text-foreground text-left">
+                      {row.selfConsPct.toFixed(1)}%
+                    </td>
+                    <td className="td-num text-cyan-500 text-left">
+                      {row.gridExportKwh.toFixed(1)} kWh
+                    </td>
+                    <td className="td-num text-emerald-500 font-bold text-left">
+                      ${row.peakSavedUsd.toFixed(2)}
+                    </td>
+                    <td className="text-right">
+                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-xs font-mono font-bold">
+                        {row.roiScore}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

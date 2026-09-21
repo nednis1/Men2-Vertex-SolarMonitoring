@@ -48,7 +48,7 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
   }, [refreshAccounts]);
 
   const selectedAccount =
-    selectedAccountId === 'ALL'
+    selectedAccountId === 'ALL' || selectedAccountId === 'ALL_FLEET'
       ? null
       : accounts.find((acc) => acc.id === selectedAccountId) || null;
 
@@ -59,16 +59,18 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
       : null;
 
   const handleSetSelectedAccountId = (id: string) => {
-    setSelectedAccountId(id);
+    const normalized = id === 'ALL_FLEET' ? 'ALL' : id;
+    setSelectedAccountId(normalized);
     setSelectedStationId('ALL');
   };
 
   const selectAccountAndPlant = (accountId: string, stationId: string = 'ALL') => {
-    setSelectedAccountId(accountId);
+    const normalized = accountId === 'ALL_FLEET' ? 'ALL' : accountId;
+    setSelectedAccountId(normalized);
     setSelectedStationId(stationId);
   };
 
-  const isFleetView = selectedAccountId === 'ALL';
+  const isFleetView = selectedAccountId === 'ALL' || selectedAccountId === 'ALL_FLEET';
   const totalAccounts = accounts.length;
   const liveAccountsCount = accounts.filter((a) => a.isLive).length;
 
