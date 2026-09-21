@@ -37,21 +37,25 @@ export default function TrigonometricAnalyticsPage() {
   const [refreshing, setRefreshing] = useState(false);
 
   // Load telemetry data from API or fall back to simulated dataset
-  const fetchHistoricalData = async () => {
+  const fetchHistoricalData = async (range: string = dateRange) => {
     try {
-      const res = await fetch('/api/deye/history');
+      const res = await fetch(`/api/deye/history?range=${range}&step=5`);
       if (res.ok) {
         const json = await res.json();
         if (json.data && Array.isArray(json.data)) {
           const mapped: HourlySolarPoint[] = json.data.map((item: any) => {
-            const hDec = parseInt(item.hour.split(':')[0], 10) || 0;
+            const parts = item.hour.split(':');
+            const h = parseInt(parts[0], 10) || 0;
+            const m = parseInt(parts[1], 10) || 0;
+            const hDec = Number((h + m / 60).toFixed(4));
             return {
               hour: item.hour,
               hourDecimal: hDec,
-              solarYieldKw: item.solarYieldKw || 0,
-              loadDemandKw: item.loadDemandKw || 45,
-              batteryFlowKw: item.batteryFlowKw || 0,
-              gridExportKw: item.gridExportKw || 0,
+              solarYieldKw: item.solarYieldKw ?? null,
+              loadDemandKw: item.loadDemandKw ?? null,
+              batteryFlowKw: item.batteryFlowKw ?? null,
+              gridExportKw: item.gridExportKw ?? (item.gridFlowKw !== null && item.gridFlowKw !== undefined ? Math.max(0, item.gridFlowKw) : null),
+              isElapsed: item.isElapsed ?? (item.solarYieldKw !== null),
             };
           });
           setHourlyData(mapped);
@@ -66,12 +70,12 @@ export default function TrigonometricAnalyticsPage() {
   };
 
   useEffect(() => {
-    fetchHistoricalData();
-  }, [selectedAccountId, selectedStationId]);
+    fetchHistoricalData(dateRange);
+  }, [selectedAccountId, selectedStationId, dateRange]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchHistoricalData();
+    await fetchHistoricalData(dateRange);
   };
 
   const installedKw = selectedPlant
@@ -153,7 +157,7 @@ export default function TrigonometricAnalyticsPage() {
         <div className="flex items-center gap-3 text-xs font-mono text-muted-foreground">
           <span>Rated Capacity: <strong className="text-foreground">{installedKw} kWp</strong></span>
           <span>•</span>
-          <span>Sampling Interval: <strong className="text-cyan-500">60 Min Discrete</strong></span>
+          <span>Sampling Interval: <strong className="text-cyan-500">5 Min High-Res</strong></span>
           <span>•</span>
           <span>Harmonic Resolution: <strong className="text-emerald-500">k=1..3</strong></span>
         </div>
@@ -166,30 +170,11 @@ export default function TrigonometricAnalyticsPage() {
       />
 
       {/* Comparative Analytical Notes & Formula Breakdown */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
         <Card className="border-border/60 bg-card/60">
           <CardHeader className="pb-2">
             <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground font-mono">
-              1. Sinusoidal Model & Residuals
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-xs text-muted-foreground space-y-1.5">
-            <p>
-              Calculates the clear-sky envelope:
-            </p>
-            <div className="p-2 rounded-lg bg-muted/50 font-mono text-[11px] text-foreground">
-              P(t) = Pmax · sin(π(t - trise) / (tset - trise))
-            </div>
-            <p>
-              Residuals (P_actual - P_ideal) identify soiling, tilt angle inefficiencies, and cloud-induced clipping.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/60 bg-card/60">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground font-mono">
-              2. 24h Fourier Decomposition
+              1. 24h Fourier Decomposition
             </CardTitle>
           </CardHeader>
           <CardContent className="text-xs text-muted-foreground space-y-1.5">
@@ -208,7 +193,7 @@ export default function TrigonometricAnalyticsPage() {
         <Card className="border-border/60 bg-card/60">
           <CardHeader className="pb-2">
             <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground font-mono">
-              3. 3-Phase AC Phasor Vectors
+              2. 3-Phase AC Phasor Vectors
             </CardTitle>
           </CardHeader>
           <CardContent className="text-xs text-muted-foreground space-y-1.5">

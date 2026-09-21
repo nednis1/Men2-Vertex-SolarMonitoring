@@ -1,3 +1,18 @@
+export interface PlantTelemetrySummary {
+  stationId: string;
+  stationName: string;
+  capacityKw: number;
+  liveSolarPowerKw: number;
+  dailyYieldKwh: number;
+  totalYieldMwh: number;
+  batterySoc: number;
+  batteryPowerKw: number;
+  gridPowerKw: number;
+  loadPowerKw: number;
+  status: 'ONLINE' | 'OFFLINE' | 'ALARM';
+  lastUpdated: string;
+}
+
 export interface StationSummary {
   stationId: string;
   name: string;
@@ -11,6 +26,7 @@ export interface StationSummary {
   loadPowerKw: number;
   status: 'ONLINE' | 'OFFLINE' | 'ALARM';
   lastUpdated: string;
+  plantsSummary?: PlantTelemetrySummary[];
 }
 
 export interface MPPTStringData {
@@ -62,11 +78,13 @@ export interface InverterAlarm {
 
 export interface HourlyEnergyPoint {
   hour: string; // e.g. "06:00"
-  solarYieldKw: number;
-  loadDemandKw: number;
-  batteryFlowKw: number; // positive charging, negative discharging
-  gridFlowKw: number; // positive export, negative import
+  solarYieldKw: number | null;
+  loadDemandKw: number | null;
+  batteryFlowKw: number | null; // positive charging, negative discharging
+  gridFlowKw: number | null; // positive export, negative import
+  gridExportKw?: number | null;
   tariffRateUsd: number;
+  isElapsed?: boolean;
 }
 
 export interface ApiHealthMetrics {

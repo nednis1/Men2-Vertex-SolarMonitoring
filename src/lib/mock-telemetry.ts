@@ -89,33 +89,100 @@ export function getMockInverterTelemetry(): InverterTelemetry {
   };
 }
 
-export function getMockHourlyEnergyPoints(): HourlyEnergyPoint[] {
-  const hours = [
-    '00:00', '02:00', '04:00', '06:00', '08:00', '10:00',
-    '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'
-  ];
+export function getMockHourlyEnergyPoints(
+  range: string = 'TODAY',
+  currentHour?: number,
+  stepMinutes: number = 5
+): HourlyEnergyPoint[] {
+  const now = new Date();
+  const currentMinutes =
+    currentHour !== undefined
+      ? currentHour * 60 + now.getMinutes()
+      : now.getHours() * 60 + now.getMinutes();
 
-  return hours.map((hour, idx) => {
-    let solarYield = 0;
-    if (idx >= 3 && idx <= 8) {
-      // Daytime curve peak around noon
-      const peakFactor = Math.sin(((idx - 3) / 6) * Math.PI);
-      solarYield = parseFloat((peakFactor * 115.0).toFixed(1));
+  const isToday = range.toUpperCase() === 'TODAY';
+  const totalSteps = Math.floor((24 * 60) / stepMinutes);
+  const points: HourlyEnergyPoint[] = [];
+
+  for (let i = 0; i < totalSteps; i++) {
+    const totalMins = i * stepMinutes;
+    const h = Math.floor(totalMins / 60);
+    const m = totalMins % 60;
+    const hourLabel = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    const hourDecimal = Number((h + m / 60).toFixed(4));
+    const isElapsed = !isToday || totalMins <= currentMinutes;
+
+    if (!isElapsed) {
+      // Future unelapsed 5-minute intervals — strictly null
+      points.push({
+        hour: hourLabel,
+        solarYieldKw: null,
+        loadDemandKw: null,
+        batteryFlowKw: null,
+        gridFlowKw: null,
+        gridExportKw: null,
+        tariffRateUsd: h >= 14 && h <= 20 ? 0.36 : 0.14,
+        isElapsed: false,
+      });
+    } else {
+      // Solar profile (sunrise ~05:45, sunset ~18:15, peak ~12:15)
+      let solar = 0;
+      if (hourDecimal >= 5.75 && hourDecimal <= 18.25) {
+        const progress = (hourDecimal - 5.75) / (18.25 - 5.75);
+        const baseSine = Math.sin(progress * Math.PI);
+        // Realistic dynamic telemetry: morning cloud transient and MPPT tracking ripples
+        const cloudDip = hourDecimal >= 9.25 && hourDecimal <= 9.75 ? 0.84 : 1.0;
+        const ripple = Math.sin(hourDecimal * 7.5) * 1.8 + Math.cos(hourDecimal * 18.3) * 0.9;
+        solar = Math.max(0, Number((baseSine * 119.5 * cloudDip + (baseSine > 0.05 ? ripple : 0)).toFixed(2)));
+      }
+
+      // Industrial Load Demand profile (morning ramp, daytime industrial operation, evening drop)
+      let load = 40.0;
+      if (hourDecimal < 6.0) {
+        load = 39.0 + Math.sin(hourDecimal * 2) * 2.5;
+      } else if (hourDecimal >= 6.0 && hourDecimal < 8.5) {
+        load = 45.0 + (hourDecimal - 6.0) * 9.5; // Morning ramp
+      } else if (hourDecimal >= 8.5 && hourDecimal < 17.5) {
+        // High industrial activity with authentic 5-min machine variations
+        load = 68.0 + Math.sin(hourDecimal * 4.2) * 4.5 + Math.cos(hourDecimal * 11.7) * 2.0;
+      } else if (hourDecimal >= 17.5 && hourDecimal < 21.0) {
+        load = 65.0 - (hourDecimal - 17.5) * 3.5;
+      } else {
+        load = 48.0 - (hourDecimal - 21.0) * 2.0;
+      }
+      load = Number(Math.max(20, load).toFixed(2));
+
+      // Battery storage dispatch
+      let battery = 0;
+      if (solar > load) {
+        // Absorb excess solar up to 32 kW
+        battery = Math.min(32.0, (solar - load) * 0.55);
+      } else {
+        // Discharge to assist peak hours
+        const deficit = load - solar;
+        battery = hourDecimal >= 17.0 && hourDecimal <= 22.0 ? -Math.min(28.0, deficit * 0.6) : -Math.min(18.0, deficit * 0.35);
+      }
+      battery = Number(battery.toFixed(2));
+
+      // Net grid exchange: solar - load - battery (+ = export, - = import)
+      const gridFlow = Number((solar - load - battery).toFixed(2));
+      const gridExport = Number(Math.max(0, gridFlow).toFixed(2));
+      const tariff = h >= 14 && h <= 20 ? 0.36 : 0.14;
+
+      points.push({
+        hour: hourLabel,
+        solarYieldKw: solar,
+        loadDemandKw: load,
+        batteryFlowKw: battery,
+        gridFlowKw: gridFlow,
+        gridExportKw: gridExport,
+        tariffRateUsd: tariff,
+        isElapsed: true,
+      });
     }
-    const loadDemand = parseFloat((45 + (idx >= 4 && idx <= 9 ? 25 : 10) + Math.random() * 5).toFixed(1));
-    const tariffRate = (idx >= 7 && idx <= 10) ? 0.36 : 0.14; // Peak tariff in late afternoon/evening
-    const batteryFlow = solarYield > loadDemand ? parseFloat(((solarYield - loadDemand) * 0.6).toFixed(1)) : -parseFloat(((loadDemand - solarYield) * 0.5).toFixed(1));
-    const gridFlow = parseFloat((solarYield - loadDemand - batteryFlow).toFixed(1));
+  }
 
-    return {
-      hour,
-      solarYieldKw: solarYield,
-      loadDemandKw: loadDemand,
-      batteryFlowKw: batteryFlow,
-      gridFlowKw: gridFlow,
-      tariffRateUsd: tariffRate,
-    };
-  });
+  return points;
 }
 
 export function getMockApiHealth(): ApiHealthMetrics {

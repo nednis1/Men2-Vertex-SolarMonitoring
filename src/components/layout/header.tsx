@@ -107,6 +107,8 @@ export function Header({
     ? `Global Fleet Aggregate (${totalAccounts} Accounts)`
     : selectedPlant
     ? `${selectedPlant.stationName}`
+    : selectedAccount?.plants && selectedAccount.plants.length > 1
+    ? `${selectedAccount.name} (All ${selectedAccount.plants.length} Plants)`
     : selectedAccount?.name || currentStationName || 'Facility Array';
 
   return (
@@ -147,6 +149,13 @@ export function Header({
                 {!isFleetView && selectedPlant && selectedAccount && (
                   <span className="text-[10px] text-muted-foreground leading-none truncate max-w-[200px] sm:max-w-[280px]">
                     {selectedAccount.name} · {selectedPlant.installedCapacityKw} kWp
+                  </span>
+                )}
+                {!isFleetView && !selectedPlant && selectedAccount && (
+                  <span className="text-[10px] text-muted-foreground leading-none truncate max-w-[200px] sm:max-w-[280px]">
+                    {selectedAccount.plants?.length
+                      ? `${selectedAccount.plants.length} Plants Combined · ${selectedAccount.capacityKw} kWp Total`
+                      : `${selectedAccount.capacityKw} kWp Total`}
                   </span>
                 )}
               </div>

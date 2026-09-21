@@ -69,11 +69,16 @@ export default function YieldArbitragePage() {
     { hour: '18:00', solarYieldKw: 9.8, loadDemandKw: 68, batteryFlowKw: -28.0, tariffRateUsd: 0.36 },
     { hour: '20:00', solarYieldKw: 0, loadDemandKw: 62, batteryFlowKw: -28.0, tariffRateUsd: 0.36 },
     { hour: '22:00', solarYieldKw: 0, loadDemandKw: 50, batteryFlowKw: -22.0, tariffRateUsd: 0.14 },
-  ]).map((pt) => ({
-    ...pt,
-    hourDecimal: parseInt(pt.hour.split(':')[0], 10),
-    gridExportKw: Math.max(0, pt.solarYieldKw - pt.loadDemandKw - Math.max(0, pt.batteryFlowKw)),
-  }));
+  ]).map((pt) => {
+    const solar = pt.solarYieldKw ?? 0;
+    const load = pt.loadDemandKw ?? 0;
+    const bat = pt.batteryFlowKw ?? 0;
+    return {
+      ...pt,
+      hourDecimal: parseInt(pt.hour.split(':')[0], 10),
+      gridExportKw: Math.max(0, solar - load - Math.max(0, bat)),
+    };
+  });
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-[1600px] mx-auto pb-12">
@@ -248,15 +253,15 @@ export default function YieldArbitragePage() {
                 <span>Diurnal Curve: Solar Generation vs Industrial Load Profile</span>
               </CardTitle>
               <CardDescription className="text-xs">
-                Amber = Solar PV Production | Indigo = Facility Load Demand | Cyan = Battery ESS Flow
+                Green = Solar PV Production | Yellow = Facility Load Demand | Cyan = Battery ESS Flow
               </CardDescription>
             </div>
             <div className="flex items-center gap-3 text-xs font-mono text-muted-foreground">
               <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> PV Harvest
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> PV Harvest
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" /> Facility Load
+                <span className="w-2.5 h-2.5 rounded-full bg-yellow-500" /> Facility Load
               </span>
               <span className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-cyan-500" /> Battery ESS
@@ -269,12 +274,12 @@ export default function YieldArbitragePage() {
                 <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                   <defs>
                     <linearGradient id="solarGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.0} />
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
                     </linearGradient>
                     <linearGradient id="loadGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0.0} />
+                      <stop offset="5%" stopColor="#eab308" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#eab308" stopOpacity={0.0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="opacity-15" />
@@ -293,7 +298,7 @@ export default function YieldArbitragePage() {
                     type="monotone"
                     dataKey="solarYieldKw"
                     name="Solar PV Harvest (kW)"
-                    stroke="#f59e0b"
+                    stroke="#10b981"
                     strokeWidth={2}
                     fill="url(#solarGrad)"
                   />
@@ -301,7 +306,7 @@ export default function YieldArbitragePage() {
                     type="monotone"
                     dataKey="loadDemandKw"
                     name="Industrial Load Demand (kW)"
-                    stroke="#6366f1"
+                    stroke="#eab308"
                     strokeWidth={2}
                     fill="url(#loadGrad)"
                   />

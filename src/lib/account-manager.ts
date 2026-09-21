@@ -496,14 +496,33 @@ class DeyeAccountManager {
             const ratedPowerW = devData
               ? parseFloat(devData.get('RatedPower') || '50000')
               : (device.ratedKw ? device.ratedKw * 1000 : 50000);
-
-            accSolarKw += liveKw;
-            accDailyKwh += dailyKwh;
-            accLifetimeMwh += lifetimeKwh / 1000;
-
             const consKw = devData
               ? parseFloat((parseFloat(devData.get('TotalConsumptionPower') || '0') / 1000).toFixed(2))
               : 0;
+
+            // Use per-plant telemetry from plantsSummary if individual inverter batchData is empty
+            const plantSum = item.station.plantsSummary?.find((ps) => String(ps.stationId) === String(plant.stationId));
+            const assignedLiveKw = liveKw > 0
+              ? liveKw
+              : plantSum
+              ? parseFloat(((plantSum.liveSolarPowerKw || 0) / (inverters.length || 1)).toFixed(2))
+              : 0;
+            const assignedDailyKwh = dailyKwh > 0
+              ? dailyKwh
+              : plantSum
+              ? parseFloat(((plantSum.dailyYieldKwh || 0) / (inverters.length || 1)).toFixed(2))
+              : 0;
+            const assignedGridKw = plantSum ? plantSum.gridPowerKw : item.station.gridPowerKw;
+            const assignedConsKw = consKw > 0
+              ? consKw
+              : plantSum
+              ? parseFloat(((plantSum.loadPowerKw || 0) / (inverters.length || 1)).toFixed(2))
+              : 0;
+            const assignedBatterySoc = plantSum?.batterySoc ?? (item.station.batterySoc || 0);
+
+            accSolarKw += assignedLiveKw;
+            accDailyKwh += assignedDailyKwh;
+            accLifetimeMwh += lifetimeKwh > 0 ? lifetimeKwh / 1000 : (plantSum?.totalYieldMwh || 0);
 
             nodes.push({
               accountId: client.accountId,
@@ -516,13 +535,13 @@ class DeyeAccountManager {
               ratedKw: Math.round(ratedPowerW / 1000),
               loggerSn: loggerSn,
               loggerStatus: loggerStatus,
-              liveSolarPowerKw: liveKw,
-              dailyYieldKwh: dailyKwh,
-              gridPowerKw: item.station.gridPowerKw,
-              consumptionPowerKw: consKw,
-              batterySoc: item.station.batterySoc || 0,
+              liveSolarPowerKw: assignedLiveKw,
+              dailyYieldKwh: assignedDailyKwh,
+              gridPowerKw: assignedGridKw,
+              consumptionPowerKw: assignedConsKw,
+              batterySoc: assignedBatterySoc,
               mode: 'PEAK SHAVING',
-              status: devData ? 'ONLINE' : (device.status === 'ONLINE' ? 'ONLINE' : 'STANDBY'),
+              status: devData ? 'ONLINE' : (plantSum?.status === 'ONLINE' || device.status === 'ONLINE') ? 'ONLINE' : 'STANDBY',
               isLive: item.isLive,
             });
           }

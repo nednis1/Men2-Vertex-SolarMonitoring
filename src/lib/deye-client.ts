@@ -243,9 +243,9 @@ export class DeyeCloudClient {
   }
 
   /**
-   * Fetch Station Summary (Real-time power, grid, load, yield from DeyeCloud OpenAPI)
+   * Fetch a single station summary from DeyeCloud OpenAPI
    */
-  public async getStationSummary(stationId?: string): Promise<{ data: StationSummary; isLive: boolean; stationDetected: boolean }> {
+  public async getSingleStationSummary(stationId?: string): Promise<{ data: StationSummary; isLive: boolean; stationDetected: boolean }> {
     const id = stationId || this.defaultStationId;
     const token = await this.getAccessToken();
 
@@ -318,7 +318,7 @@ export class DeyeCloudClient {
           const summary: StationSummary = {
             stationId: String(id),
             name: stationName,
-            capacityKw: installedCapacityKw,
+            capacityKw: installedCapacityKw > 0 ? installedCapacityKw : (matchingPlant?.installedCapacityKw || 0),
             liveSolarPowerKw: parseFloat((genW / 1000).toFixed(2)),
             dailyYieldKwh: 0,
             totalYieldMwh: 0,
@@ -334,10 +334,100 @@ export class DeyeCloudClient {
         }
       }
     } catch (err) {
-      console.warn(`[DeyeCloud][${this.accountName}] Station summary fetch failed:`, err);
+      console.warn(`[DeyeCloud][${this.accountName}] Station summary fetch failed for station ${id}:`, err);
     }
 
     return { data: emptySummary, isLive: false, stationDetected: false };
+  }
+
+  /**
+   * Fetch Station Summary:
+   * - If stationId is provided and != 'ALL', returns that specific plant.
+   * - If stationId is omitted or == 'ALL', queries ALL plants in the account concurrently
+   *   and computes an accurate, combined aggregate summary plus per-plant telemetry!
+   */
+  public async getStationSummary(stationId?: string): Promise<{ data: StationSummary; isLive: boolean; stationDetected: boolean }> {
+    if (stationId && stationId !== 'ALL') {
+      return this.getSingleStationSummary(stationId);
+    }
+
+    // Multi-plant account aggregation
+    if (this.plants && this.plants.length > 0) {
+      const results = await Promise.all(
+        this.plants.map((p) => this.getSingleStationSummary(p.stationId))
+      );
+
+      let totalCapacityKw = 0;
+      let totalLiveSolarPowerKw = 0;
+      let totalDailyYieldKwh = 0;
+      let totalYieldMwh = 0;
+      let totalBatteryPowerKw = 0;
+      let totalGridPowerKw = 0;
+      let totalLoadPowerKw = 0;
+      let sumBatterySoc = 0;
+      let batteryCount = 0;
+      let anyLive = false;
+      let anyAlarm = false;
+
+      const plantsSummary = results.map((res, i) => {
+        const p = this.plants[i];
+        if (res.isLive) anyLive = true;
+        if (res.data.status === 'ALARM') anyAlarm = true;
+
+        const cap = res.data.capacityKw > 0 ? res.data.capacityKw : (p.installedCapacityKw || 0);
+        totalCapacityKw += cap;
+        totalLiveSolarPowerKw += res.data.liveSolarPowerKw || 0;
+        totalDailyYieldKwh += res.data.dailyYieldKwh || 0;
+        totalYieldMwh += res.data.totalYieldMwh || 0;
+        totalBatteryPowerKw += res.data.batteryPowerKw || 0;
+        totalGridPowerKw += res.data.gridPowerKw || 0;
+        totalLoadPowerKw += res.data.loadPowerKw || 0;
+
+        if (res.data.batterySoc > 0) {
+          sumBatterySoc += res.data.batterySoc;
+          batteryCount++;
+        }
+
+        return {
+          stationId: res.data.stationId || p.stationId,
+          stationName: res.data.name || p.stationName,
+          capacityKw: cap,
+          liveSolarPowerKw: res.data.liveSolarPowerKw || 0,
+          dailyYieldKwh: res.data.dailyYieldKwh || 0,
+          totalYieldMwh: res.data.totalYieldMwh || 0,
+          batterySoc: res.data.batterySoc || 0,
+          batteryPowerKw: res.data.batteryPowerKw || 0,
+          gridPowerKw: res.data.gridPowerKw || 0,
+          loadPowerKw: res.data.loadPowerKw || 0,
+          status: res.data.status,
+          lastUpdated: res.data.lastUpdated,
+        };
+      });
+
+      const aggregated: StationSummary = {
+        stationId: 'ALL',
+        name: `${this.accountName} (All ${this.plants.length} Plants)`,
+        capacityKw: parseFloat(totalCapacityKw.toFixed(1)),
+        liveSolarPowerKw: parseFloat(totalLiveSolarPowerKw.toFixed(2)),
+        dailyYieldKwh: parseFloat(totalDailyYieldKwh.toFixed(2)),
+        totalYieldMwh: parseFloat(totalYieldMwh.toFixed(2)),
+        batterySoc: batteryCount > 0 ? Math.round(sumBatterySoc / batteryCount) : 0,
+        batteryPowerKw: parseFloat(totalBatteryPowerKw.toFixed(2)),
+        gridPowerKw: parseFloat(totalGridPowerKw.toFixed(2)),
+        loadPowerKw: parseFloat(totalLoadPowerKw.toFixed(2)),
+        status: anyAlarm ? 'ALARM' : anyLive ? 'ONLINE' : 'OFFLINE',
+        lastUpdated: new Date().toISOString(),
+        plantsSummary,
+      };
+
+      return {
+        data: aggregated,
+        isLive: anyLive,
+        stationDetected: true,
+      };
+    }
+
+    return this.getSingleStationSummary(this.defaultStationId);
   }
 
   /**
@@ -610,8 +700,8 @@ export class DeyeCloudClient {
   /**
    * Hourly curves
    */
-  public getHourlyEnergy(): HourlyEnergyPoint[] {
-    return getMockHourlyEnergyPoints();
+  public getHourlyEnergy(range: string = 'TODAY', stepMinutes: number = 5): HourlyEnergyPoint[] {
+    return getMockHourlyEnergyPoints(range, undefined, stepMinutes);
   }
 }
 

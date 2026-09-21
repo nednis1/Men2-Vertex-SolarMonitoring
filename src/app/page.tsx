@@ -90,8 +90,38 @@ export default function EnergyFlowDashboard() {
             for (const plant of targetPlants) {
               const inverters = plant.devices.filter((d) => d.deviceType === 'INVERTER');
               const loggers = plant.devices.filter((d) => d.deviceType === 'LOGGER');
-              const kwPerInv =
-                (json.data?.liveSolarPowerKw || 0) / (inverters.length || 1);
+
+              // Match plant against multi-plant aggregated breakdown
+              const plantSummary = json.data?.plantsSummary?.find(
+                (ps: any) => String(ps.stationId) === String(plant.stationId)
+              );
+
+              const plantSolarKw = plantSummary
+                ? plantSummary.liveSolarPowerKw
+                : targetPlants.length === 1
+                ? (json.data?.liveSolarPowerKw || 0)
+                : ((plant.installedCapacityKw || 100) / (selectedAccount.capacityKw || 100)) * (json.data?.liveSolarPowerKw || 0);
+
+              const plantDailyKwh = plantSummary
+                ? plantSummary.dailyYieldKwh
+                : targetPlants.length === 1
+                ? (json.data?.dailyYieldKwh || 0)
+                : ((plant.installedCapacityKw || 100) / (selectedAccount.capacityKw || 100)) * (json.data?.dailyYieldKwh || 0);
+
+              const plantGridKw = plantSummary
+                ? plantSummary.gridPowerKw
+                : (json.data?.gridPowerKw || 0);
+
+              const plantLoadKw = plantSummary
+                ? plantSummary.loadPowerKw
+                : (json.data?.loadPowerKw || 0);
+
+              const plantBatterySoc = plantSummary
+                ? plantSummary.batterySoc
+                : (json.data?.batterySoc || 0);
+
+              const kwPerInv = plantSolarKw / (inverters.length || 1);
+              const dailyYieldPerInv = plantDailyKwh / (inverters.length || 1);
 
               for (let i = 0; i < inverters.length; i++) {
                 const device = inverters[i];
@@ -110,14 +140,14 @@ export default function EnergyFlowDashboard() {
                   model: device.model || 'Deye Inverter',
                   ratedKw: device.ratedKw || 50,
                   loggerSn: device.loggerSn || matchingLogger?.deviceSn,
-                  loggerStatus: matchingLogger?.status || 'ONLINE',
+                  loggerStatus: matchingLogger?.status || (plantSummary?.status === 'ONLINE' ? 'ONLINE' : 'ONLINE'),
                   liveSolarPowerKw: kwPerInv,
-                  dailyYieldKwh: json.data?.dailyYieldKwh || 0,
-                  gridPowerKw: json.data?.gridPowerKw || 0,
-                  consumptionPowerKw: json.data?.loadPowerKw || 0,
-                  batterySoc: json.data?.batterySoc || 0,
+                  dailyYieldKwh: dailyYieldPerInv,
+                  gridPowerKw: plantGridKw,
+                  consumptionPowerKw: plantLoadKw,
+                  batterySoc: plantBatterySoc,
                   mode: 'PEAK SHAVING',
-                  status: device.status === 'ONLINE' ? 'ONLINE' : 'STANDBY',
+                  status: (plantSummary?.status === 'ONLINE' || device.status === 'ONLINE') ? 'ONLINE' : 'STANDBY',
                   isLive: json.isLive,
                 });
               }
@@ -210,7 +240,7 @@ export default function EnergyFlowDashboard() {
               variant="outline"
               className="h-5 px-2 text-[10px] font-black uppercase tracking-widest border-emerald-500/30 text-emerald-500 bg-emerald-500/10"
             >
-              {isFleetView ? 'Multi-Account Bus' : 'Hybrid Plant'}
+              {isFleetView ? 'Multi-Account Bus' : selectedStationId === 'ALL' ? `All ${selectedAccount?.plants?.length || 1} Plants Bus` : 'Hybrid Plant'}
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground mt-1">
@@ -218,7 +248,7 @@ export default function EnergyFlowDashboard() {
               ? `Real-time multi-site energy flow across ${totalAccounts} configured DeyeCloud accounts.`
               : selectedPlant
               ? `Real-time hybrid inverter loop for ${selectedPlant.stationName} (${selectedPlant.installedCapacityKw} kWp).`
-              : 'Real-time hybrid inverter synoptic loop, power balancing, storage distribution, and harmonic analytics.'}
+              : `Real-time aggregated telemetry across all ${selectedAccount?.plants?.length || 1} plants (${totalCapacity.toFixed(0)} kWp total capacity).`}
           </p>
         </div>
 
